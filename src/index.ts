@@ -1,11 +1,10 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-var-requires */
 import path from 'path'
 import fs from 'fs'
 import _ from 'lodash'
 import * as mkdirp from 'mkdirp'
 import c from 'chalk'
-import { NuxtConfig } from '@nuxt/types'
-import { AxiosRequestConfig } from 'axios'
 import fetchSpec from './fetchSpec'
 import V3 from './schema/v3/Template'
 import V2 from './schema/v2/Template'
@@ -13,54 +12,49 @@ import { notNullish } from './utils'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
-if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development'
+try { require('ts-node').register() } catch (e) {}
 
 export interface CliOptions {
   src: string
   pluginsDir: string
   pluginName: string
-  inject: string
+  exportName: string
   typePath: string
   basePath: string
   skipHeader: boolean
   form?: 'underscore'
 }
-export type Options = CliOptions & { axiosConfig?: AxiosRequestConfig }
+export type Options = CliOptions
 
 interface Argv extends Partial<CliOptions> { _: [string?] }
 const argvToOptions = ({ _: [$1], src = $1, ...rest }: Argv): Partial<CliOptions> => ({ src, ...rest })
 const defaultOptions = ({
   src = '',
-  pluginsDir = 'plugins',
+  pluginsDir = '',
   pluginName = 'api',
-  inject = pluginName,
+  exportName = pluginName,
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),
   basePath = '/v1',
   skipHeader = false,
   form,
-  axiosConfig,
-}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, inject, typePath, basePath, skipHeader, form, axiosConfig })
+}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, basePath, skipHeader, form })
 
-const loadNuxtConfig = async () => {
+const loadConfig = async () => {
   try {
-    return await require('nuxt').loadNuxtConfig() as NuxtConfig
+    const file = require(path.join(process.cwd(), './tswagger.config'))
+    const config = file.default || file || []
+    return [config].flat()
   } catch (e) {
-    return undefined
+    return []
   }
 }
-const optionsFromNuxtConfig = () => loadNuxtConfig().then(config => {
-  let { publicRuntimeConfig } = config || {}
-  if (!publicRuntimeConfig) return
-  if (typeof publicRuntimeConfig === 'function') publicRuntimeConfig = publicRuntimeConfig(process.env)
-  return [publicRuntimeConfig?.nuxtswagger].filter(notNullish).flat()
-})
 
 const optionFromJson = (): Partial<CliOptions> => {
   const ret: any = {}
   try {
     const jsonPath = path.join(process.cwd(), 'package.json')
-    const { nuxtswagger }: { nuxtswagger: Partial<CliOptions> } = require(jsonPath)
-    return nuxtswagger
+    const { tswagger }: { tswagger: Partial<CliOptions> } = require(jsonPath)
+    return tswagger
   } catch (e) { return ret }
 }
 
@@ -96,24 +90,20 @@ const generate = async (options: CliOptions) => {
 }
 
 const run = async function () {
-  console.log(c.bold(c.green('Nux') + c.bgBlue.white('TS') + c.cyan('wagger')), c.gray(`(v${version})`))
+  console.log(c.bold(c.bgBlue.white('TS') + c.cyan('wagger')), c.gray(`(v${version})`))
   const { argv }: { argv: Argv } = yargs(hideBin(process.argv))
   const cliOption = argvToOptions(argv)
   const jsonOption = optionFromJson()
-  const configOptions = await optionsFromNuxtConfig()
+  const configOptions = await loadConfig()
   let partialOptions = [configOptions, cliOption, jsonOption].flat().filter(notNullish)
   if (cliOption.pluginName || cliOption.src) {
     const { pluginName } = defaultOptions()
     partialOptions = partialOptions.filter(x => (x.pluginName || pluginName) === (cliOption.pluginName || pluginName))
   }
-  const options = _.uniqBy(partialOptions.map(option => defaultOptions(_.defaults({}, cliOption, option, jsonOption)))
+  let options = _.uniqBy(partialOptions.map(option => defaultOptions(_.defaults({}, cliOption, option, jsonOption)))
     , x => x.pluginName)
+  if (options.filter(x => x.src).length) options = options.filter(x => x.src)
+
   for (const option of options) await generate(option)
 }
 run()
-
-declare module '@nuxt/types/config/runtime' {
-  interface NuxtRuntimeConfig {
-    nuxtswagger?: Partial<Options> | Partial<Options>[]
-  }
-}

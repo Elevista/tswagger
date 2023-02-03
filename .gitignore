@@ -3,7 +3,8 @@
 node_modules
 plugins
 dist
+api
 types
 *.tgz
 /package*
-/nuxt.config.*
+/tswagger.config.ts

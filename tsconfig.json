@@ -13,7 +13,6 @@
     "types": [
       "@types/node",
       "@types/mkdirp",
-      "@nuxtjs/axios"
     ],
     "strict": true
   },

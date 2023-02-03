@@ -38,18 +38,18 @@ export abstract class TemplateCommon {
   protected abstract spec: Spec
   protected readonly relTypePath: string
   protected readonly basePath: string
-  protected readonly inject: string
+  protected readonly exportName: string
   protected readonly skipHeader: boolean
   protected options: TemplateOptions
   private hasMultipart = false
 
   protected constructor (spec: Spec, options: TemplateOptions) {
-    const { basePath, inject, skipHeader, relTypePath } = options
+    const { basePath, exportName, skipHeader, relTypePath } = options
     this.relTypePath = relTypePath
     this.basePath = basePath
     this.skipHeader = skipHeader
     this.options = options
-    this.inject = inject.replace(/^[^a-zA-Z]+/, '').replace(/^[A-Z]/, x => x.toLowerCase())
+    this.exportName = exportName.replace(/^[^a-zA-Z]+/, '').replace(/^[A-Z]/, x => x.toLowerCase())
     this.fixRefDeep(spec)
   }
 
@@ -438,23 +438,20 @@ export abstract class TemplateCommon {
 
     const type = responses[200] ? this.getResponseType(responses[200]) : 'any'
     const paramsString = axiosParams.map(x => x || 'undefined').join(', ')
-    return `(${this.toArgs(parameters)}): Promise<${type}> => $axios.$${methodType}(${paramsString})`
+    return this.axiosArrowFn(this.toArgs(parameters), type, methodType, paramsString)
   }
 
-  protected pluginFunction (object: string) {
-    const { axiosConfig, pluginName } = this.options
-    const ret = `exposureAxios(${object}, $axios)`
-    if (!axiosConfig) return `({ $axios }: Context) => ${ret}`
-    const code = `
-$axios = $axios.create([$config.nuxtswagger].flat().find(x => x?.pluginName === '${pluginName}')?.axiosConfig)
-return ${ret}
-`.trim().replace(/^/mg, '  ')
-    return `({ $axios, $config }: Context) => {\n${code}\n}`
+  protected axiosArrowFn (args: string, returnType: string, methodType: string, params: string) {
+    return `(${args}): $R<${returnType}> => _('${methodType}')(${params})`
   }
 
-  protected pluginTemplate ({ object }: { object: string }) {
-    const { importTypes, inject, hasMultipart } = this
-    const multipart = hasMultipart
+  protected exportFormat (object: string) {
+    const name = this.exportName
+    return `export ${name ? `const ${name} =` : 'default'} ${object}`
+  }
+
+  protected get multipart () {
+    return this.hasMultipart
       ? `const ${Multipart} = (o: any) => {
   if (!(o instanceof Object)) return o
   const formData = new FormData()
@@ -471,26 +468,22 @@ return ${ret}
   return formData
 }`
       : ''
+  }
+
+  protected get noInspect () { return noInspect }
+  protected pluginTemplate ({ object }: { object: string }) {
+    const { importTypes, multipart, noInspect } = this
     return `
 ${noInspect}
-import { Context, Plugin } from '@nuxt/types'
-import { AxiosRequestConfig } from 'axios'
+import Axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 ${importTypes}
-
-const $${inject} = ${this.pluginFunction(object)}
+let $axios = Axios.create()
+export const setInstance = (axios: AxiosInstance) => { $axios = axios }
+export const getInstance = () => $axios
+type $R<T> = Promise<T & { $response: AxiosResponse }>
+${this.exportFormat(object)}
+const _ = (method: string) => (...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(x.data, '$response', {value: x}))
 ${multipart}
-const exposureAxios = <T, V> (o: T, value: V) => Object.defineProperty(o, '$axios', { value }) as T & { readonly $axios: V }
-declare module '@nuxt/types' {
-  interface Context { $${inject}: ReturnType<typeof $${inject}> }
-  interface NuxtAppOptions { $${inject}: ReturnType<typeof $${inject}> }
-}
-declare module 'vue/types/vue' {
-  interface Vue { $${inject}: ReturnType<typeof $${inject}> }
-}
-declare module 'vuex/types/index' {
-  interface Store<S> { $${inject}: ReturnType<typeof $${inject}> }
-}
-export default ((context, inject) => inject('${inject}', $${inject}(context))) as Plugin
 `.trimStart()
   }
 }

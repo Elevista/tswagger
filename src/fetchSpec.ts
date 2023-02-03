@@ -1,9 +1,9 @@
 import { fetch } from 'cross-fetch'
 import { Spec as v2 } from './schema/v2/Spec'
 import { Spec as v3 } from './schema/v3/Spec'
-const fs = require('fs')
-const p = require('path')
-const c = require('chalk')
+import fs = require('fs')
+import p = require('path')
+import c = require('chalk')
 export default function (path: string): Promise<v2 | v3> {
   const isRemote = /^[a-z]+?:\/\//.test(path)
   if (!isRemote) return JSON.parse(fs.readFileSync(p.resolve(path)).toString())

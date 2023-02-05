@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { camelCase, entries, keys, notNullish, stringify } from './utils'
 import * as v2 from './schema/v2/Spec'
 import * as v3 from './schema/v3/Spec'
-import { Options } from './index'
+import { Options } from './cli'
 type ParameterIn = v2.ParameterIn | v3.ParameterIn | 'body' | '$config'
 interface Parameter { type: string, required: boolean, name: string, valName: string, pos: ParameterIn, description: string, multipart?: boolean }
 type Response = v2.Response | v3.Response

@@ -3,7 +3,7 @@
   "version": "1.0.0-1",
   "description": "TS-Swagger plugin generator CLI",
   "bin": {
-    "tswagger": "dist/index.js"
+    "tswagger": "dist/cli.js"
   },
   "scripts": {
     "alpha": "npm version prerelease --preid=alpha",

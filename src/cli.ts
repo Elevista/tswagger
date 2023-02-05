@@ -9,22 +9,11 @@ import fetchSpec from './fetchSpec'
 import V3 from './schema/v3/Template'
 import V2 from './schema/v2/Template'
 import { notNullish } from './utils'
+import { CliOptions, Options } from './options'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
 try { require('ts-node').register() } catch (e) {}
-
-export interface CliOptions {
-  src: string
-  pluginsDir: string
-  pluginName: string
-  exportName: string
-  typePath: string
-  basePath: string
-  skipHeader: boolean
-  form?: 'underscore'
-}
-export type Options = CliOptions
 
 interface Argv extends Partial<CliOptions> { _: [string?] }
 const argvToOptions = ({ _: [$1], src = $1, ...rest }: Argv): Partial<CliOptions> => ({ src, ...rest })

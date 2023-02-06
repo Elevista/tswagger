@@ -19,7 +19,7 @@ interface Argv extends Partial<CliOptions> { _: [string?] }
 const argvToOptions = ({ _: [$1], src = $1, ...rest }: Argv): Partial<CliOptions> => ({ src, ...rest })
 const defaultOptions = ({
   src = '',
-  pluginsDir = '',
+  pluginsDir = 'lib',
   pluginName = 'api',
   exportName = pluginName,
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),

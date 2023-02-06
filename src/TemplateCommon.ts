@@ -19,6 +19,7 @@ const typeMatchMap = {
   number: ['integer', 'long', 'float', 'double'],
   string: ['byte', 'binary', 'date', 'dateTime', 'password'],
 }
+const primitiveTypeRegex = new RegExp(['boolean', Object.entries(typeMatchMap)].flat(3).join('|'))
 const localeCompare = (a: string, b: string) => a.localeCompare(b)
 const entriesCompare = ([a]: any[], [b]: any[]) => localeCompare(a, b)
 const noInspect = '/* eslint-disable */\n// noinspection ES6UnusedImports,JSUnusedLocalSymbols\n'
@@ -144,7 +145,7 @@ export abstract class TemplateCommon {
         return `{\n${items.join('\n').replace(/^./gm, '  $&')}\n}`
       }
       if (typeObj.type === 'string' && 'format' in typeObj && typeObj.format === 'binary') return nullable('File')
-      return nullable(typeObj.type)
+      return nullable(primitiveTypeRegex.test(typeObj.type) ? typeObj.type : 'any')
     }
     return typeDeep(typeObj) + prependText.encode(comment)
   }

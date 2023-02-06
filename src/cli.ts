@@ -9,7 +9,7 @@ import fetchSpec from './fetchSpec'
 import V3 from './schema/v3/Template'
 import V2 from './schema/v2/Template'
 import { notNullish } from './utils'
-import { CliOptions, Options } from './options'
+import { TSwaggerCliOptions as CliOptions, TSwaggerOptions as Options } from './index'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')

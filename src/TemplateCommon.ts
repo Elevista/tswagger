@@ -344,7 +344,8 @@ export abstract class TemplateCommon {
       let { in: pos, required = /body|path/.test(pos), name, description = '' } = parameter
       if (pos === 'body') name = '$body'
       if (pos === 'formData') this.hasMultipart = true
-      return { name, valName: camelCase(name), pos, type, required, description }
+      const valName = camelCase(name.replace(/[[\]]/g, ''))
+      return { name, valName, pos, type, required, description }
     }).filter(notNullish)
     if (('requestBody' in method) && method.requestBody) {
       const { required = true, content, description = '' } = method.requestBody

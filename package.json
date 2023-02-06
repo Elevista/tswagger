@@ -59,10 +59,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Elevista/nextswagger.git"
+    "url": "git+https://github.com/Elevista/tswagger.git"
   },
   "bugs": {
-    "url": "https://github.com/Elevista/nextswagger/issues"
+    "url": "https://github.com/Elevista/tswagger/issues"
   },
-  "homepage": "https://github.com/Elevista/nextswagger#readme"
+  "homepage": "https://github.com/Elevista/tswagger#readme"
 }

@@ -444,7 +444,7 @@ export abstract class TemplateCommon {
   }
 
   protected axiosArrowFn (args: string, returnType: string, methodType: string, params: string) {
-    return `(${args}): $R<${returnType}> => _('${methodType}')(${params})`
+    return `(${args}): $R<${returnType}> => _('${methodType}', ${params})`
   }
 
   protected exportFormat (object: string) {
@@ -482,9 +482,9 @@ ${importTypes}
 let $axios = Axios.create()
 export const setInstance = (axios: AxiosInstance) => { $axios = axios }
 export const getInstance = () => $axios
-type $R<T> = Promise<T & { $response: AxiosResponse }>
+type $R<T> = Promise<T & { readonly $response: AxiosResponse }>
 ${this.exportFormat(object)}
-const _ = (method: string) => (...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(x.data, '$response', {value: x}))
+const _ = (method: string, ...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(x.data, '$response', {value: x}))
 ${multipart}
 `.trimStart()
   }

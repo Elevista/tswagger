@@ -19,7 +19,7 @@ in script code
 import { setAxios, api } from './api'
 import axios from 'axios'
 setInstance(axios.create({ baseURL: 'http://localhost:8080', timeout: 100 })) // optional
-const foo = await api.bar.get()
+const foo = await api().bar.get()
 ```
 
 ### Path param mode
@@ -28,12 +28,12 @@ const foo = await api.bar.get()
 
 ```js
 /* default (1.1.0+) */
-api.foo.bar(1).get(2)
-api.foo.bar.get()
+api().foo.bar(1).get(2)
+api().foo.bar.get()
 
 /* underscore */
-api.foo._bar.get(1, 2)
-api.foo.bar.get()
+api().foo._bar.get(1, 2)
+api().foo.bar.get()
 ```
 
 ## Options

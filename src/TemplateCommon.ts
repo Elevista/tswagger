@@ -447,9 +447,9 @@ export abstract class TemplateCommon {
     return `(${args}): $R<${returnType}> => _('${methodType}', ${params})`
   }
 
-  protected exportFormat (object: string) {
+  protected exportFormat (code = '') {
     const name = this.exportName
-    return `export ${name ? `const ${name} =` : 'default'} ${object}`
+    return `export ${name ? `const ${name} =` : 'default'} ${code}`
   }
 
   protected get multipart () {
@@ -479,13 +479,10 @@ export abstract class TemplateCommon {
 ${noInspect}
 import Axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 ${importTypes}
-let $axios = Axios.create()
-export const setInstance = (axios: AxiosInstance) => { $axios = axios }
-export const getInstance = () => $axios
 export interface $customExtendResponse {}
 type $R<T> = Promise<(T extends object ? T : { value: T }) & $customExtendResponse & { readonly $response: AxiosResponse<T> }>
-${this.exportFormat(object)}
-const _ = (method: string, ...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(x.data, '$response', {value: x}))
+const $ep = (_: any) => (${object})
+${this.exportFormat('')}($axios = Axios.create()) => $ep((method: string, ...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(Object(x.data) === x.data ? {value: x.data} : x.data, '$response', {value: x})))
 ${multipart}
 `.trimStart()
   }

@@ -1,6 +1,6 @@
 {
   "name": "tswagger",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "TS-Swagger plugin generator CLI",
   "bin": {
     "tswagger": "dist/cli.js"

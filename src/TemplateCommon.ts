@@ -453,8 +453,12 @@ export abstract class TemplateCommon {
     return `(${args}): $R<${returnType}> => _('${methodType}', ${params})`
   }
 
-  protected exportFormat (code = '') {
+  protected get exportCode () {
     const name = this.exportName
+    const code = `($axios = Axios.create($axiosConfig)) => $ep((method: string, ...args: any) => {
+  const promise = ($axios as any)[method](...args)
+  return Object.defineProperty(promise.then((x: any) => x.data), 'response', {value: promise})
+})`
     return `export ${name ? `const ${name} =` : 'default'} ${code}`
   }
 
@@ -480,15 +484,16 @@ export abstract class TemplateCommon {
 
   protected get noInspect () { return noInspect }
   protected pluginTemplate ({ object }: { object: string }) {
-    const { importTypes, multipart, noInspect } = this
+    const { importTypes, multipart, noInspect, exportCode } = this
     return `
 ${noInspect}
-import Axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import Axios, { AxiosStatic, AxiosRequestConfig, AxiosResponse } from 'axios'
 ${importTypes}
 export interface $customExtendResponse {}
-type $R<T> = Promise<(T extends object ? T : { value: T }) & $customExtendResponse & { readonly $response: AxiosResponse<T> }>
+type $R<T> = Promise<T> & { readonly response: Promise<AxiosResponse<T> & $customExtendResponse> }
+export const $axiosConfig: Required<Parameters<AxiosStatic['create']>>[0] = {}
 const $ep = (_: any) => (${object})
-${this.exportFormat('')}($axios = Axios.create()) => $ep((method: string, ...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(Object(x.data) === x.data ? x.data : {value: x.data}, '$response', {value: x})))
+${exportCode}
 ${multipart}
 `.trimStart()
   }

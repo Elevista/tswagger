@@ -78,6 +78,12 @@ export abstract class TemplateCommon {
   }
 
   protected makeComment (typeObj: Exclude<TypeDefs, boolean>, onlyText = false) {
+    if ('allOf' in typeObj && typeObj.allOf.length === 2) {
+      const [first, second] = typeObj.allOf
+      if ('$ref' in first && 'description' in second && Object.keys(second).length === 1) {
+        typeObj = ({ ...first, ...second })
+      }
+    }
     const title = 'title' in typeObj ? this.comment(typeObj.title, true) : ''
     const description = 'description' in typeObj ? this.comment(typeObj.description, true) : ''
     const example = 'example' in typeObj ? this.comment(typeObj.example, true) : ''

@@ -98,7 +98,7 @@ export abstract class TemplateCommon {
       const nullable = (type: string): string => ('nullable' in typeObj && typeObj.nullable) ? `${type} | null` : type
       if ('schema' in typeObj) return typeDeep(typeObj.schema)
       if ('$ref' in typeObj) return (typeObj.$ref in this.schemas) ? typeObj.$ref : 'any'
-      if ('allOf' in typeObj) return typeObj.allOf.map(typeDeep).join(' & ')
+      if ('allOf' in typeObj) return typeObj.allOf.map(typeDeep).filter(x => x !== 'any').join(' & ') || 'any'
       if ('oneOf' in typeObj) return typeObj.oneOf.map(typeDeep).join(' | ')
       if ('anyOf' in typeObj) {
         const refs = typeObj.anyOf.filter(x => '$ref' in x).map(typeDeep).filter(x => x !== 'any')

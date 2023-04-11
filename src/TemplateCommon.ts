@@ -444,7 +444,8 @@ export abstract class TemplateCommon {
       axiosParams.push(`{ ${[headers, params, data, config && (`...${config.valName}`)].filter(x => x).join(', ')} }`)
     } else if (config) axiosParams.push(config.valName)
 
-    const type = responses[200] ? this.getResponseType(responses[200]) : 'any'
+    const response = responses[200] || responses.default
+    const type = response ? this.getResponseType(response) : 'any'
     const paramsString = axiosParams.map(x => x || 'undefined').join(', ')
     return this.axiosArrowFn(this.toArgs(parameters), type, methodType, paramsString)
   }

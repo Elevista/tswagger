@@ -134,7 +134,7 @@ export abstract class TemplateCommon {
       if ('enum' in typeObj) return nullable(typeObj.enum.map(x => JSON.stringify(x).replace(/"/g, '\'')).join(' | '))
       if (!('type' in typeObj)) return 'any'
       if (typeObj.type === 'file') return 'File'
-      if (typeObj.type === 'array') return `Array<${typeDeep(typeObj.items)}>`.replace('Array<File>', 'File[] | FileList')
+      if (typeObj.type === 'array') return `Array<${typeDeep(typeObj.items || {})}>`.replace('Array<File>', 'File[] | FileList')
       if (typeObj.type === 'object') {
         const { properties, additionalProperties, required = [] } = typeObj
         const entries: [string, Exclude<TypeDefs, boolean>][] = properties ? Object.entries(properties) : []

@@ -451,7 +451,7 @@ export abstract class TemplateCommon {
   }
 
   protected axiosArrowFn (args: string, returnType: string, methodType: string, params: string) {
-    return `(${args}): $R<${returnType}> => _('${methodType}', ${params})`
+    return `<$T = ${returnType}>(${args}): $R<$T> => _('${methodType}', ${params})`
   }
 
   protected get exportCode () {

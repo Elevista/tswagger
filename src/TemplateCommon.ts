@@ -444,14 +444,17 @@ export abstract class TemplateCommon {
       axiosParams.push(`{ ${[headers, params, data, config && (`...${config.valName}`)].filter(x => x).join(', ')} }`)
     } else if (config) axiosParams.push(config.valName)
 
-    const response = responses[200] || responses.default
-    const type = response ? this.getResponseType(response) : 'any'
-    const paramsString = axiosParams.map(x => x || 'undefined').join(', ')
-    return this.axiosArrowFn(this.toArgs(parameters), type, methodType, paramsString)
+    const filterResponse = (filter: RegExp) => _.uniq(keys(responses).filter(key => filter.test(key)).map(key => responses[key] || []).flat().map(x => this.getResponseType(x)).filter(x => x !== 'any'))
+    const responseTypes = filterResponse(/^([23]\d\d|default)$/)
+    const errorTypes = filterResponse(/^[45]\d\d$/)
+    const paramsString = axiosParams.map(x => x || 'undefined').join(', ') || 'any'
+    return this.axiosArrowFn(this.toArgs(parameters), responseTypes, errorTypes, methodType, paramsString)
   }
 
-  protected axiosArrowFn (args: string, returnType: string, methodType: string, params: string) {
-    return `<$T = ${returnType}>(${args}): $R<$T> => _('${methodType}', ${params})`
+  protected axiosArrowFn (args: string, responseTypes: string[], errorTypes: string[], methodType: string, params: string) {
+    const returnType = responseTypes.join(' | ') || 'any'
+    const errorType = errorTypes.join(' | ') || 'any'
+    return `<$T = ${returnType}, $E = ${errorType}>(${args}): $R<$T, $E> => _('${methodType}', ${params})`
   }
 
   protected get exportCode () {
@@ -488,14 +491,14 @@ export abstract class TemplateCommon {
     const { importTypes, multipart, noInspect, exportCode } = this
     return `
 ${noInspect}
-import Axios, { AxiosStatic, AxiosRequestConfig, AxiosResponse } from 'axios'
+import Axios, { AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 ${importTypes}
 export interface $customExtendResponse {}
 interface PromiseEt<T, E> extends Promise<T> {
   then<R1 = T, R2 = never>(onfulfilled?: ((value: T) => R1 | PromiseLike<R1>) | undefined | null, onrejected?: ((reason: E) => R2 | PromiseLike<R2>) | undefined | null): Promise<R1 | R2>;
   catch<R1 = never>(onrejected?: ((reason: E) => R1 | PromiseLike<R1>) | undefined | null): Promise<T | R1>;
 }
-type $R<T, E = any> = PromiseEt<T, E> & { readonly response: PromiseEt<AxiosResponse<T> & $customExtendResponse, AxiosError<E>> }
+type $R<T, E> = PromiseEt<T, E> & { readonly response: PromiseEt<AxiosResponse<T> & $customExtendResponse, AxiosError<E>> }
 export const $axiosConfig: Required<Parameters<AxiosStatic['create']>>[0] = {}
 const $ep = (_: any) => (${object})
 ${exportCode}

@@ -2,7 +2,7 @@ import { TemplateCommon, TemplateOptions } from '../../TemplateCommon'
 import { Response, Spec } from './Spec'
 
 export default class Template extends TemplateCommon {
-  protected spec: Spec
+  public spec: Spec
   constructor (spec: Spec, options: TemplateOptions) {
     super(spec, options)
     spec.definitions = this.fixKeys(spec.definitions)

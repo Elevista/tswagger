@@ -131,7 +131,7 @@ export abstract class TemplateCommon {
         }
         return [notRefs, combinations(refs)].flat().join(' | ')
       }
-      if ('enum' in typeObj) return nullable(typeObj.enum.map(x => JSON.stringify(x).replace(/"/g, '\'')).join(' | '))
+      if ('enum' in typeObj) return nullable(typeObj.enum.length ? typeObj.enum.map(x => JSON.stringify(x).replace(/"/g, '\'')).join(' | ') : 'never')
       if (!('type' in typeObj)) return 'any'
       if (typeObj.type === 'file') return 'File'
       if (typeObj.type === 'array') return `Array<${typeDeep(typeObj.items || {})}>`.replace('Array<File>', 'File[] | FileList')

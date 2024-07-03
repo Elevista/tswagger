@@ -207,7 +207,7 @@ export abstract class TemplateCommon {
       const [{ rawName, genericReplacer, type }] = arr
       const comments = arr.map(x => this.makeComment(x.type, true)).filter(x => x)
       const comment = comments.length ? `${this.comment(comments.join('\n')).trim()}\n` : ''
-      return `${comment}export type ${genericReplacer(`${rawName} = ${this.typeDeep(type, 3, true)}`)}`.replace(prependText.regex, prependText.replacer)
+      return `${comment}export type ${genericReplacer(`${rawName} = ${this.typeDeep(type, 4, true)}`)}`.replace(prependText.regex, prependText.replacer)
     })
     const typeMatch = entries(typeMatchMap).map(([jsType, list]) => list.map(swaggerType => `export type ${swaggerType} = ${jsType}`)).flat().join('\n')
     return [noInspect, ...exports, typeMatch, ''].join('\n')

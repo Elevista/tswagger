@@ -100,10 +100,7 @@ export abstract class TemplateCommon {
     const canComment = maxIndent >= 0 && !noComment
     const indentProps = maxIndent > 0
     const comment = canComment ? this.makeComment(typeObj) : ''
-    const typeDeep = (typeObj: Exclude<TypeDefs, boolean>): string => {
-      const nullable = (type: string): string => ('nullable' in typeObj && typeObj.nullable) ? `${type} | null` : type
-      if ('schema' in typeObj) return typeDeep(typeObj.schema)
-      if ('$ref' in typeObj) return (typeObj.$ref in this.schemas) ? typeObj.$ref : 'any'
+    const unionTypes = (typeObj: Exclude<TypeDefs, boolean>) => {
       if ('allOf' in typeObj) return typeObj.allOf.map(typeDeep).filter(x => x !== 'any').join(' & ') || 'any'
       if ('oneOf' in typeObj) return typeObj.oneOf.map(typeDeep).join(' | ')
       if ('anyOf' in typeObj) {
@@ -131,8 +128,13 @@ export abstract class TemplateCommon {
         }
         return [notRefs, combinations(refs)].flat().join(' | ')
       }
+    }
+    const typeDeep = (typeObj: Exclude<TypeDefs, boolean>): string => {
+      const nullable = (type: string): string => ('nullable' in typeObj && typeObj.nullable) ? `${type} | null` : type
+      if ('schema' in typeObj) return typeDeep(typeObj.schema)
+      if ('$ref' in typeObj) return (typeObj.$ref in this.schemas) ? typeObj.$ref : 'any'
       if ('enum' in typeObj) return nullable(typeObj.enum.length ? typeObj.enum.map(x => JSON.stringify(x).replace(/"/g, '\'')).join(' | ') : 'never')
-      if (!('type' in typeObj)) return 'any'
+      if (!('type' in typeObj)) return unionTypes(typeObj) || 'any'
       if (typeObj.type === 'file') return 'File'
       if (typeObj.type === 'array') return `Array<${typeDeep(typeObj.items || {})}>`.replace('Array<File>', 'File[] | FileList')
       if (typeObj.type === 'object') {
@@ -147,8 +149,12 @@ export abstract class TemplateCommon {
           if (!validIdentifier.test(name)) name = `'${name.replace(/'/g, '\\\'')}'`
           return `${name + optional}: ${this.typeDeep(value, maxIndent - 1)}`
         })
-        if (!indentProps) return `{ ${items.join(', ')} }`
-        return `{\n${items.join('\n').replace(/^./gm, '  $&')}\n}`
+        const withUnion = (obj: string) => {
+          const union = unionTypes(typeObj)
+          return union ? `${obj} & (${union})` : obj
+        }
+        if (!indentProps) return withUnion(`{ ${items.join(', ')} }`)
+        return withUnion(`{\n${items.join('\n').replace(/^./gm, '  $&')}\n}`)
       }
       if (typeObj.type === 'string' && 'format' in typeObj && typeObj.format === 'binary') return nullable('File')
       return nullable(primitiveTypeRegex.test(typeObj.type) ? typeObj.type : 'any')
@@ -201,7 +207,7 @@ export abstract class TemplateCommon {
       const [{ rawName, genericReplacer, type }] = arr
       const comments = arr.map(x => this.makeComment(x.type, true)).filter(x => x)
       const comment = comments.length ? `${this.comment(comments.join('\n')).trim()}\n` : ''
-      return `${comment}export type ${genericReplacer(`${rawName} = ${this.typeDeep(type, 1, true)}`)}`.replace(prependText.regex, prependText.replacer)
+      return `${comment}export type ${genericReplacer(`${rawName} = ${this.typeDeep(type, 3, true)}`)}`.replace(prependText.regex, prependText.replacer)
     })
     const typeMatch = entries(typeMatchMap).map(([jsType, list]) => list.map(swaggerType => `export type ${swaggerType} = ${jsType}`)).flat().join('\n')
     return [noInspect, ...exports, typeMatch, ''].join('\n')

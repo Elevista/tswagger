@@ -9,3 +9,4 @@ types
 *.tgz
 /package*
 /tswagger.config.ts
+src/test.ts

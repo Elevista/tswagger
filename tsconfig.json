@@ -5,9 +5,11 @@
     "target": "ES2019",
     "allowJs": true,
     "outDir": "dist/",
+    "noImplicitAny": false,
     "esModuleInterop": true,
     "declaration": true,
     "declarationDir": "./types",
+    "resolveJsonModule": true,
     "sourceMap": false,
     "lib": ["ESNext", "dom"],
     "types": [

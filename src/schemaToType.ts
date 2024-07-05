@@ -1,7 +1,7 @@
 /* eslint-disable dot-notation */
 import { Schema, SchemaArray, SchemaNumber, SchemaObject, SchemaOf, SchemaString, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
 import { docSchema } from './tsDoc'
-import { brace, entries, toSafeName, toValidName } from './utils'
+import { brace, entries, toSafeKey, toValidName } from './utils'
 
 type Next = (schema: Schema) => string
 export const schemaToType = (schema: Schema, comment = true, indent = '  '): string => {
@@ -27,9 +27,9 @@ const toType = {
     const { type, properties, required = [], ...rest } = schema
     if (!properties) return type
     const obj = brace(entries(properties).map(([key, value]) => {
-      const tuple = `${toSafeName(key)}${required.includes(`${key}`) ? '' : '?'}: ${next(value)}`
-      return `${comment ? docSchema(value) : ''}${tuple},`
-    }), indent)
+      const tuple = `${toSafeKey(key)}${required.includes(`${key}`) ? '' : '?'}: ${next(value)}`
+      return `${comment ? docSchema(value) : ''}${tuple}`
+    }).join(indent ? '\n ' : ', '), indent)
     return isSchemaOf(rest) ? `${obj} & (${next(rest)})` : obj
   },
   array: (schema: SchemaArray, next: Next) => `Array<${schema.items ? next(schema.items) : 'unknown'}>`,

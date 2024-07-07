@@ -17,6 +17,7 @@ export interface TSwaggerCliOptions {
   typePath: string
   basePath: string
   skipHeader: boolean
+  mode: 'axios' | 'request'
   form?: undefined
 }
 export type TSwaggerOptions = TSwaggerCliOptions

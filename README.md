@@ -1,16 +1,20 @@
 # TSwagger
+
 TS-Swagger plugin generator CLI
 
 [![npm package](https://img.shields.io/npm/v/tswagger.svg?maxAge=2592000&style=flat-square)](https://www.npmjs.com/package/tswagger)
 [![github stars](https://img.shields.io/github/stars/Elevista/tswagger?style=social)](https://github.com/Elevista/tswagger)
 
 ## Installation
+
 ```sh
 npm i -D tswagger
 ```
 
 ## Basic Usage
+
 in project directory
+
 ```sh
 npx tswagger https://api.server.foo/swagger.json
 ```
@@ -22,6 +26,33 @@ import { createApi } from './lib/api'
 const api = createApi()
 const foo = await api.foo.bar(1).get(2)
 api.foo.bar.get()
+```
+
+### Use fetch or other request library
+
+```sh
+npx tswagger https://api.server.foo/swagger.json --mode request
+```
+
+```js
+import { createApi } from './lib/api'
+const fetchApi = createApi((path, method, { params, formData, body }) => {
+  const url = new URL(`http://localhost${path}`)
+  const url.searchParams = (...)
+  return fetch(url, {
+    method,
+    body: formData ?? body ?? JSON.stringify(body),
+  })
+}, response => response.json())
+const {data} = await fetchApi.foo.bar(1).get(2)
+fetchApi.foo.bar.get()
+
+
+import axios, { AxiosError } from 'axios'
+const axiosApi = createApi((path, method, { params, formData, body }) =>
+  axios({ url: path, method, params, data: formData ?? body }),
+  response => response.data)
+const {data} = axiosApi.foo.bar(1).get(2)
 ```
 
 ## Options
@@ -36,6 +67,7 @@ npx tswagger argument1 --option1 value1 --option2 value2
 |------------------|----------------------------|------------------------------------------|-------------------------------------|
 | (first argument) | Swagger schema JSON path   | (required)                               | `http://..` or `./foo/swagger.json` |
 | `src`            | same as first argument     | first argument                           | same as above                       |
+| `mode`           | Code generation mode       | `axios`                                  | `request`                           |
 | `plugins-dir`    | Directory                  | `lib`                                    |                                     |
 | `plugin-name`    | Name for generated flile   | `api`                                    |                                     |
 | `export-name`    | Export name                | `createApi`                              | `''`(export default)                |
@@ -56,6 +88,7 @@ export default option
 ```
 
 ### Set options using `package.json`
+
 ```json
 {
   "tswagger": {
@@ -74,11 +107,9 @@ export default option
 }
 ```
 
-
-
 and `npm run swagger` or `npx tswagger`
 
-
 ## License
+
 ISC License
 Copyright (c) 2023, Elevista

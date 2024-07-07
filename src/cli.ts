@@ -10,6 +10,7 @@ import { notNullish } from './utils'
 import { TSwaggerCliOptions as CliOptions, TSwaggerOptions as Options } from './index'
 import { genAxiosCode } from './axios'
 import { genTypeFile } from './schemaToType'
+import { genRequestCode } from './request'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
@@ -25,8 +26,9 @@ const defaultOptions = ({
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),
   basePath = '/v1',
   skipHeader = false,
+  mode = 'axios',
   form,
-}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, basePath, skipHeader, form })
+}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, basePath, skipHeader, form, mode })
 
 const loadConfig = async () => {
   try {
@@ -70,7 +72,8 @@ const generate = async (options: CliOptions) => {
 
   fs.writeFileSync(options.typePath, genTypeFile(schemas))
   console.log(c.blue(' ✔ create  '), options.typePath)
-  fs.writeFileSync(pluginPath, genAxiosCode(spec.paths, relTypePath, schemas, options.exportName))
+  const code = (options.mode === 'request' ? genRequestCode : genAxiosCode)(spec.paths, relTypePath, schemas, options.exportName)
+  fs.writeFileSync(pluginPath, code)
   console.log(c.green(' ✔ create  '), pluginPath)
 }
 

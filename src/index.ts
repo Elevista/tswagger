@@ -1,10 +1,14 @@
-export * from './utils'
-export { default as V2T } from './schema/v2/Template'
-export { default as V3T } from './schema/v3/Template'
-export { Spec as V2spec } from './schema/v2/Spec'
-export { Spec as V3spec } from './schema/v3/Spec'
-export { TemplateOptions, TemplateCommon } from './TemplateCommon'
-export { default as fetchSpec } from './fetchSpec'
+export * from './traversePaths'
+export * from './parametersToTuples'
+export * from './schemaToType'
+export { toValidName, toSafeKey, variableBoundary, brace } from './utils'
+export { tsDoc, docSchema, tsDocForm } from './tsDoc'
+export * as template from './template'
+export * as schema from './spec/schema'
+export type * as v2 from './spec/v2'
+export type * as v3 from './spec/v3'
+export * from './typeOperation'
+
 export interface TSwaggerCliOptions {
   src: string
   pluginsDir: string

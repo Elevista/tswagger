@@ -14,26 +14,14 @@ in project directory
 ```sh
 npx tswagger https://api.server.foo/swagger.json
 ```
+
 in script code
-```js
-import { setAxios, api } from './api'
-import axios from 'axios'
-setInstance(axios.create({ baseURL: 'http://localhost:8080', timeout: 100 })) // optional
-const foo = await api().bar.get()
-```
-
-### Path param mode
-
-*see `form` option*
 
 ```js
-/* default (1.1.0+) */
-api().foo.bar(1).get(2)
-api().foo.bar.get()
-
-/* underscore */
-api().foo._bar.get(1, 2)
-api().foo.bar.get()
+import { createApi } from './lib/api'
+const api = createApi()
+const foo = await api.foo.bar(1).get(2)
+api.foo.bar.get()
 ```
 
 ## Options
@@ -41,7 +29,7 @@ api().foo.bar.get()
 options priority : command line > `tswagger.config` > `package.json`
 
 ```sh
-tswagger argument1 --option1 value1 --option2 value2
+npx tswagger argument1 --option1 value1 --option2 value2
 ```
 
 | option           | description                | default                                  | example                             |
@@ -50,7 +38,7 @@ tswagger argument1 --option1 value1 --option2 value2
 | `src`            | same as first argument     | first argument                           | same as above                       |
 | `plugins-dir`    | Directory                  | `lib`                                    |                                     |
 | `plugin-name`    | Name for generated flile   | `api`                                    |                                     |
-| `export-name`    | Export name                | `{plugin-name}`                          | `''`(export default)                |
+| `export-name`    | Export name                | `createApi`                              | `''`(export default)                |
 | `type-path`      | Path for scheme type file  | `{plugins-dir}/{plugin-name}/{types.ts}` | `./types/models.ts`                 |
 | `base-path`      | base path                  | `/v1`                                    | `/v2`                               |
 | `skip-header`    | Ignore parameter in header | `false`                                  | `true`                              |

@@ -2,14 +2,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import path from 'path'
 import fs from 'fs'
-import _ from 'lodash'
+import { defaults, uniqBy } from 'lodash'
 import * as mkdirp from 'mkdirp'
 import c from 'chalk'
 import fetchSpec from './fetchSpec'
-import V3 from './schema/v3/Template'
-import V2 from './schema/v2/Template'
 import { notNullish } from './utils'
 import { TSwaggerCliOptions as CliOptions, TSwaggerOptions as Options } from './index'
+import { genAxiosCode } from './axios'
+import { genTypeFile } from './schemaToType'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
@@ -21,7 +21,7 @@ const defaultOptions = ({
   src = '',
   pluginsDir = 'lib',
   pluginName = 'api',
-  exportName = pluginName,
+  exportName = 'createApi',
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),
   basePath = '/v1',
   skipHeader = false,
@@ -66,16 +66,12 @@ const generate = async (options: CliOptions) => {
   makeDirs(options)
 
   const { pluginPath, relTypePath } = pluginRelTypePath(options)
-  let template
-  const templateOptions = { ...options, relTypePath }
-  if (('swagger' in spec) && spec.swagger === '2.0') template = new V2(spec, templateOptions)
-  if (('openapi' in spec) && parseInt(spec.openapi) === 3) template = new V3(spec, templateOptions)
+  const schemas = ('openapi' in spec ? spec.components?.schemas : 'swagger' in spec ? spec.definitions : {}) || {}
 
-  if (!template) throw new Error('not support')
-  console.log(c.green(' ✔ create  '), pluginPath)
-  fs.writeFileSync(pluginPath, template.plugin())
+  fs.writeFileSync(options.typePath, genTypeFile(schemas))
   console.log(c.blue(' ✔ create  '), options.typePath)
-  fs.writeFileSync(options.typePath, template.definitions())
+  fs.writeFileSync(pluginPath, genAxiosCode(spec.paths, relTypePath, schemas, options.exportName))
+  console.log(c.green(' ✔ create  '), pluginPath)
 }
 
 const run = async function () {
@@ -89,7 +85,7 @@ const run = async function () {
     const { pluginName } = defaultOptions()
     partialOptions = partialOptions.filter(x => (x.pluginName || pluginName) === (cliOption.pluginName || pluginName))
   }
-  let options = _.uniqBy(partialOptions.map(option => defaultOptions(_.defaults({}, cliOption, option, jsonOption)))
+  let options = uniqBy(partialOptions.map(option => defaultOptions(defaults({}, cliOption, option, jsonOption)))
     , x => x.pluginName)
   if (options.filter(x => x.src).length) options = options.filter(x => x.src)
 

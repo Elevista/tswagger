@@ -18,8 +18,7 @@
     "swagger"
   ],
   "files": [
-    "dist",
-    "types"
+    "dist"
   ],
   "author": "Elevista",
   "license": "ISC",
@@ -38,8 +37,12 @@
     "types",
     "plugins"
   ],
-  "main": "dist/index.js",
-  "types": "types/index.d.ts",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./tsDoc": "./dist/tsDoc.js",
+    "./template": "./dist/template.js"
+  },
   "devDependencies": {
     "@types/lodash": "^4.17.6",
     "@types/node": "^18.19.39",

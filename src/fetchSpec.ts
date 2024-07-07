@@ -1,15 +1,14 @@
 import { fetch } from 'cross-fetch'
-import { Spec as v2 } from './schema/v2/Spec'
-import { Spec as v3 } from './schema/v3/Spec'
-import fs = require('fs')
-import p = require('path')
-import c = require('chalk')
-export default function (path: string): Promise<v2 | v3> {
+import { OpenAPI } from './spec/v3'
+import { Swagger } from './spec/v2'
+import fs from 'fs'
+import p from 'path'
+import c from 'chalk'
+export default async function (path: string): Promise<OpenAPI | Swagger> {
   const isRemote = /^[a-z]+?:\/\//.test(path)
   if (!isRemote) return JSON.parse(fs.readFileSync(p.resolve(path)).toString())
   console.log(c.cyan(' ℹ fetching'), 'JSON from', c.underline(path))
-  return fetch(path).then(res => {
-    if (res.status >= 400) throw new Error('Fetch Error')
-    return res.json()
-  })
+  const res = await fetch(path)
+  if (res.status >= 400) throw new Error('Fetch Error')
+  return await res.json()
 }

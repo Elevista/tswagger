@@ -17,6 +17,6 @@ export interface TSwaggerCliOptions {
   typePath: string
   basePath: string
   skipHeader: boolean
-  form?: 'underscore'
+  form?: undefined
 }
 export type TSwaggerOptions = TSwaggerCliOptions

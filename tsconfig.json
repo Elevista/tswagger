@@ -10,11 +10,7 @@
     "declaration": true,
     "resolveJsonModule": true,
     "sourceMap": false,
-    "lib": ["ESNext", "dom"],
-    "types": [
-      "@types/node",
-      "@types/mkdirp",
-    ],
+    "lib": ["ESNext"],
     "strict": true
   },
   "include": ["src/*"],

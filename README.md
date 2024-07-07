@@ -42,7 +42,6 @@ npx tswagger argument1 --option1 value1 --option2 value2
 | `type-path`      | Path for scheme type file  | `{plugins-dir}/{plugin-name}/{types.ts}` | `./types/models.ts`                 |
 | `base-path`      | base path                  | `/v1`                                    | `/v2`                               |
 | `skip-header`    | Ignore parameter in header | `false`                                  | `true`                              |
-| `form`           | Path param interface mode  | (undefined)                              | `underscore`                        |
 
 ### Set options using `tswagger.config`
 

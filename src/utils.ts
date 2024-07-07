@@ -59,3 +59,9 @@ export const brace = (str: string | string[], indent = '  ', [open, close]: '{}'
   if (!indent) return `${open}${text.trim().replace(/,$/, '')}${close}`
   return `${open}\n${text.replace(/^/mg, indent)}\n${close}`
 }
+
+export const variableBoundary = (varName: string, flag = '') => new RegExp([
+  /(?<![\p{L}\p{N}_$])/u.source, // boundary
+  varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  /(?![\p{L}\p{N}_$])/u.source, // boundary
+].join(''), `u${flag}`)

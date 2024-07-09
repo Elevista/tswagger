@@ -26,6 +26,7 @@
     "chalk": "^4.1.0",
     "cross-fetch": "^3.0.6",
     "lodash": "^4.17.21",
+    "mkdirp": "^3.0.1",
     "yargs": "^16.1.0"
   },
   "simple-git-hooks": {
@@ -53,7 +54,6 @@
     "eslint": "^8.1.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-formatter-friendly": "^7.0.0",
-    "mkdirp": "^3.0.1",
     "simple-git-hooks": "^2.6.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"

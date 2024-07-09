@@ -48,6 +48,16 @@ type ToObject<T extends { type: 'object' }> = (GetDepth1<T, 'properties'> extend
   ? RequireProps<{ [K in keyof P]?: SchemaToType<P[K]> }, GetDepth2<T, 'required', number> & keyof P> : {})
   & (T extends { oneOf: readonly object[] } ? SchemaToType<T['oneOf'][number]> : {})
 
+/**
+ * Converts the schema to TypeScript type.
+ * @param T The schema object.
+ * @returns The TypeScript type.
+ * @example
+ * ```typescript
+ * type T = SchemaToType<{type: 'object', properties: {a: {type: 'string'}, b: {type: 'number'}}, required: ['a']}>
+ * type T_is = {a: string, b?: number}
+ * ```
+ */
 export type SchemaToType<T> =
   T extends { type: 'object' } ? ToObject<T> :
   T extends { type: 'array', items: {} } ? Array<SchemaToType<T['items']>> :

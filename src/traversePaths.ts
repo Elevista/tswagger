@@ -15,6 +15,20 @@ if (!Array.prototype.with) {
   }
 }
 
+/**
+ * Traverses the path to create an endpoint.
+ * Generates object code in a hierarchical structure,
+ * and when it reaches the endpoint,
+ * it calls the callback and inserts the value returned to the endpoint position.
+ * Paths in the form of {key} are converted to functions.
+ *
+ * @param pathsObject Paths object to traverse.
+ * @param endpoint Callback function to generate the endpoint.
+ * @returns The generated object code.
+ * @example
+ * input - {'/path1': {get: { ... }, post: { ... }}
+ * output - `{path1: {get: (callback result), post: (callback result)}`
+ */
 export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathItem: PathItem) => string) => {
   const propertyName = (name: string) => name === '' ? '\'\'' : toValidName(name)
   const delBrace = <T extends string | undefined>(key: T) => key?.replace(/[{}]/g, '') as T

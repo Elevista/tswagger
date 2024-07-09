@@ -36,6 +36,14 @@ export const operationTupleConfig = (operation: Operation) => {
   return { pathTuples: path.map(x => x.tuple), tuples, entries, data: body.value }
 }
 
+/**
+ * A function used as a callback function for the traversePaths function.
+ * Traverses the methods for the endpoint and generates the call function code.
+ *
+ * @param path The path of the endpoint.
+ * @param pathItem The endpoint object.
+ * @returns The generated call function code.
+ */
 export const generateApiMethods = (path: string, pathItem: PathItem) => brace(methodTypes.flatMap(methodType => {
   const operation = pathItem[methodType]
   if (!operation) return []

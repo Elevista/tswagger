@@ -4,6 +4,15 @@ import { docSchema } from './tsDoc'
 import { brace, entries, escapeProp, toValidName } from './utils'
 
 type Next = (schema: Schema) => string
+
+/**
+ *  Converts the schema to TypeScript type code.
+ *
+ * @param schema The schema object.
+ * @param comment If true, add comments to object properties.
+ * @param indent If there is no indent, it is displayed in one line.
+ * @returns The TypeScript type code.
+ */
 export const schemaToType = (schema: Schema, comment = true, indent = '  '): string => {
   const next: Next = (schema: Schema) => schemaToType(schema, comment, indent)
   if (isSchemaObject(schema)) return toType.object(schema, indent, comment, next)
@@ -67,5 +76,11 @@ const combinations = function (str1: string[]) {
   return combinations
 }
 
+/**
+ * Generates ts code that exports all schemas as types.
+ *
+ * @param schemas Type name and schema object pairs.
+ * @returns The TypeScript type code.
+ */
 export const genTypeFile = (schemas: Record<string, Schema> = {}) => `/* eslint-disable */\n${Object.entries(schemas).map(([name, schema]) =>
   `${docSchema(schema)}export type ${toValidName(name)} = ${schemaToType(schema)}`).join('\n')}`

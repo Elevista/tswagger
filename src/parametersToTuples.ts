@@ -4,7 +4,24 @@ import { toValidName } from './utils'
 import { schemaToType } from './schemaToType'
 export type Parameter = ParameterV2 | ParameterV3
 
-export type TupleInfo = {name: string, type: string, validName: string, entry: string, tuple: string}
+export type TupleInfo = {
+  /** The original name of the parameter. */
+  name: string
+  /** The typescript type of the parameter. */
+  type: string
+  /** The valid javascript variable name */
+  validName: string
+  /**
+   * A object entry code
+   * @example `originalName: validName`
+   */
+  entry: string
+  /**
+   * The typescript tuple
+   * @example `name: string`
+   */
+  tuple: string
+}
 
 export const parameterToTuple = (x: ParameterV2 | ParameterV3): TupleInfo => {
   const schema = 'type' in x ? x : x.schema

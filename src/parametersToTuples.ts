@@ -22,12 +22,7 @@ export const parameterToTuple = (x: ParameterV2 | ParameterV3): TupleInfo => {
 
 export const parametersToTuples = (parameters: Parameter[]) => {
   const ret: Record<Parameter['in'], ReturnType<typeof parameterToTuple>[]> = {
-    query: [],
-    header: [],
-    formData: [],
-    path: [],
-    body: [],
-    cookie: [],
+    query: [], header: [], formData: [], path: [], body: [], cookie: [],
   }
   parameters.forEach(x => ret[x.in].push(parameterToTuple(x)))
   return ret

@@ -29,10 +29,6 @@ export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathI
     const next = (lastPath: string) => {
       const path = paths.with(paths.length - 1, lastPath).join('/')
       const nextEndpoints = endpoints.filter((x) => pathSlice(x.path, paths.length) === path)
-      const tuple = nextEndpoints.flatMap(({ operation: { parameters = [] } }) => {
-        const parameter = parameters.find(x => x.in === 'path' && x.name === key)
-        return parameter ? parameterToTuple(parameter).tuple : []
-      }).pop()
       const nextKeys = uniq(nextEndpoints.map((x) => pathAt(x.path, paths.length)).filter(notNullish).map(delBrace))
       const nextEntries = pathsObject[path]
         ? endpoint(path, pathsObject[path])
@@ -40,6 +36,10 @@ export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathI
           ? brace(nextKeys.map(key => ({ key, path: `${path}/${key}` }))
             .map(({ path, key }) => `${tsDoc(pathsObject[path])}${propertyName(key)}: ${deep(path)},`))
           : undefined
+      const tuple = nextEndpoints.flatMap(({ operation: { parameters = [] } }) => {
+        const parameter = parameters.find(x => x.in === 'path' && x.name === key)
+        return parameter ? parameterToTuple(parameter).tuple : []
+      }).pop()
       return tuple ? `(${tuple}) => (${nextEntries})` : nextEntries
     }
 

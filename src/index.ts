@@ -1,7 +1,7 @@
 export * from './traversePaths'
 export * from './parametersToTuples'
 export * from './schemaToType'
-export { toValidName, toSafeKey, variableBoundary, brace } from './utils'
+export { toValidName, escapeProp, variableBoundary, brace } from './utils'
 export { tsDoc, docSchema, tsDocForm } from './tsDoc'
 export * as template from './template'
 export * as schema from './spec/schema'

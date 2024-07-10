@@ -6,7 +6,7 @@ ${promiseEt}
 type $P<R, E> = PromiseEt<R, E> & { readonly response: PromiseEt<AxiosResponse<R> & $customExtendResponse, AxiosError<E>> }`
 
 export const axiosArrowCode = (responseType: string, errorType: string, tuples: string[], methodType: string, args: string[]) =>
-   `<$R = ${responseType}, $E = ${errorType}>(${tuples.join(', ')}): $P<$R, $E> => _(${[`'${methodType}'`, ...args].join(', ')}),`
+   `<$R = ${responseType}, $E = ${errorType}>(${tuples.join(', ')}): $P<$R, $E> => _(${[`'${methodType}'`, ...args].join(', ')})`
 
 export const exportCode = (exportName: string, axiosCode: string) => `
 const $ep = (_: any) => (${axiosCode})\n

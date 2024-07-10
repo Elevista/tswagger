@@ -32,15 +32,15 @@ const generateApiMethods = (path: string, pathItem: PathItem) => brace(methodTyp
   const pathTemplate = `\`${path.replace(/{([^}]+)}/g, '${$1}')}\`` // eslint-disable-line no-template-curly-in-string
 
   const payloads = [
-    requestType && ((isMultipart) ? `formData: ${multipart}($body), ` : 'body: $body, '),
-    !!query.length && `params: ${brace(query.map(x => x.entry).join(', '), query.length > 5 ? '  ' : '')},`,
+    requestType && ((isMultipart) ? `formData: ${multipart}($body)` : 'body: $body'),
+    !!query.length && `params: ${brace(query.map(x => x.entry), query.length > 5 ? '  ' : '')}`,
   ].filter(isPresent)
   const payload = payloads.length ? brace(payloads, '') : undefined
   return `${tsDoc(operation)}${methodType}: ${arrowCode(responseType, tuples, pathTemplate, methodType, payload)}`
 }))
 
 export const arrowCode = (responseType: string, tuples: string[], path: string, methodType: MethodType, payload?: string) =>
-   `<$R = ${responseType}>(${tuples.join(', ')}): $P<$R, $T> => _(${[path, `'${methodType}'`, payload].filter(isPresent).join(', ')}),`
+   `<$R = ${responseType}>(${tuples.join(', ')}): $P<$R, $T> => _(${[path, `'${methodType}'`, payload].filter(isPresent).join(', ')})`
 
 export const genRequestCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '') => {
   const obj = traversePaths(paths, generateApiMethods)

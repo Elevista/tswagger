@@ -48,7 +48,7 @@ export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathI
         ? endpoint(path, pathsObject[path])
         : nextKeys.length
           ? brace(nextKeys.map(key => ({ key, path: `${path}/${key}` }))
-            .map(({ path, key }) => `${tsDoc(pathsObject[path])}${propertyName(key)}: ${deep(path)},`))
+            .map(({ path, key }) => `${tsDoc(pathsObject[path])}${propertyName(key)}: ${deep(path)}`))
           : undefined
       const tuple = nextEndpoints.flatMap(({ operation: { parameters = [] } }) => {
         const parameter = parameters.find(x => x.in === 'path' && x.name === key)

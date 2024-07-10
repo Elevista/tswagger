@@ -15,9 +15,6 @@ export interface TSwaggerCliOptions {
   pluginName: string
   exportName: string
   typePath: string
-  basePath: string
-  skipHeader: boolean
   mode: 'axios' | 'request'
-  form?: undefined
 }
 export type TSwaggerOptions = TSwaggerCliOptions

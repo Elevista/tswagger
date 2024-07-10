@@ -24,11 +24,8 @@ const defaultOptions = ({
   pluginName = 'api',
   exportName = 'createApi',
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),
-  basePath = '/v1',
-  skipHeader = false,
   mode = 'axios',
-  form,
-}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, basePath, skipHeader, form, mode })
+}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, mode })
 
 const loadConfig = async () => {
   try {

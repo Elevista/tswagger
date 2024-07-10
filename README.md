@@ -24,8 +24,8 @@ in script code
 ```js
 import { createApi } from './lib/api'
 const api = createApi()
-const foo = await api.foo.bar(1).get(2)
-api.foo.bar.get()
+const foo = await api.foo.bar(1).post(requestBody) // Post /foo/{bar} 
+api.foo.bar.get() // GET /foo/bar
 ```
 
 ### Use fetch or other request library
@@ -44,8 +44,8 @@ const fetchApi = createApi((path, method, { params, formData, body }) => {
     body: formData ?? body ?? JSON.stringify(body),
   })
 }, response => response.json())
-const {data} = await fetchApi.foo.bar(1).get(2)
-fetchApi.foo.bar.get()
+const {data} = await fetchApi.foo.bar(1).get(2) // GET /foo/{bar} 
+fetchApi.foo.bar.get() // GET /foo/bar
 
 
 import axios, { AxiosError } from 'axios'
@@ -72,8 +72,6 @@ npx tswagger argument1 --option1 value1 --option2 value2
 | `plugin-name`    | Name for generated flile   | `api`                                    |                                     |
 | `export-name`    | Export name                | `createApi`                              | `''`(export default)                |
 | `type-path`      | Path for scheme type file  | `{plugins-dir}/{plugin-name}/{types.ts}` | `./types/models.ts`                 |
-| `base-path`      | base path                  | `/v1`                                    | `/v2`                               |
-| `skip-header`    | Ignore parameter in header | `false`                                  | `true`                              |
 
 ### Set options using `tswagger.config`
 

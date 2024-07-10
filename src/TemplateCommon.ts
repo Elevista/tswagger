@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { camelCase, entries, keys, notNullish, stringify } from './utils'
 import * as v2 from './schema/v2/Spec'
 import * as v3 from './schema/v3/Spec'
-import { Options } from './options'
+import { TSwaggerOptions as Options } from './index'
 type ParameterIn = v2.ParameterIn | v3.ParameterIn | 'body' | '$config'
 interface Parameter { type: string, required: boolean, name: string, valName: string, pos: ParameterIn, description: string, multipart?: boolean }
 type Response = v2.Response | v3.Response
@@ -19,6 +19,7 @@ const typeMatchMap = {
   number: ['integer', 'long', 'float', 'double'],
   string: ['byte', 'binary', 'date', 'dateTime', 'password'],
 }
+const primitiveTypeRegex = new RegExp(['boolean', Object.entries(typeMatchMap)].flat(3).join('|'))
 const localeCompare = (a: string, b: string) => a.localeCompare(b)
 const entriesCompare = ([a]: any[], [b]: any[]) => localeCompare(a, b)
 const noInspect = '/* eslint-disable */\n// noinspection ES6UnusedImports,JSUnusedLocalSymbols\n'
@@ -35,15 +36,15 @@ const prependText = {
 }
 
 export abstract class TemplateCommon {
-  protected abstract spec: Spec
-  protected readonly relTypePath: string
-  protected readonly basePath: string
-  protected readonly exportName: string
-  protected readonly skipHeader: boolean
-  protected options: TemplateOptions
+  public abstract spec: Spec
+  public readonly relTypePath: string
+  public readonly basePath: string
+  public readonly exportName: string
+  public readonly skipHeader: boolean
+  public options: TemplateOptions
   private hasMultipart = false
 
-  protected constructor (spec: Spec, options: TemplateOptions) {
+  public constructor (spec: Spec, options: TemplateOptions) {
     const { basePath, exportName, skipHeader, relTypePath } = options
     this.relTypePath = relTypePath
     this.basePath = basePath
@@ -53,11 +54,11 @@ export abstract class TemplateCommon {
     this.fixRefDeep(spec)
   }
 
-  protected abstract get schemas(): Schemas
+  public abstract get schemas(): Schemas
 
-  protected abstract getResponseType(response: Response): string
+  public abstract getResponseType(response: Response): string
 
-  protected fixTypeName = (name: string) => name
+  public fixTypeName = (name: string) => name
     .replace(/^#\/(components\/schemas|definitions)\//, '')
     .replace(/«/g, '<').replace(/»/g, '>')
     .replace(/List<(.+?)>/g, 'Array<$1>')
@@ -65,7 +66,7 @@ export abstract class TemplateCommon {
     .replace(/.+/, camelCase)
     .replace(/[ ]+$/g, '')
 
-  protected comment (comment?: string | number | boolean | object, onlyText = false) {
+  public comment (comment?: string | number | boolean | object, onlyText = false) {
     if (comment === undefined) return ''
     if (comment === Object(comment)) comment = JSON.stringify(comment)
     const string = comment.toString().trim().replace(/<br\/?>(\s)*/gi, '\n$1').replace(/\//g, '∕')
@@ -76,7 +77,13 @@ export abstract class TemplateCommon {
     return ['/**', ...lines.map(x => ` * ${x}`), ' */'].join('\n')
   }
 
-  protected makeComment (typeObj: Exclude<TypeDefs, boolean>, onlyText = false) {
+  public makeComment (typeObj: Exclude<TypeDefs, boolean>, onlyText = false) {
+    if ('allOf' in typeObj && typeObj.allOf.length === 2) {
+      const [first, second] = typeObj.allOf
+      if ('$ref' in first && 'description' in second && Object.keys(second).length === 1) {
+        typeObj = ({ ...first, ...second })
+      }
+    }
     const title = 'title' in typeObj ? this.comment(typeObj.title, true) : ''
     const description = 'description' in typeObj ? this.comment(typeObj.description, true) : ''
     const example = 'example' in typeObj ? this.comment(typeObj.example, true) : ''
@@ -88,16 +95,13 @@ export abstract class TemplateCommon {
     return comment && this.comment(comment, onlyText)
   }
 
-  protected typeDeep (typeObj: TypeDefs, maxIndent = -1, noComment = false): string {
+  public typeDeep (typeObj: TypeDefs, maxIndent = -1, noComment = false): string {
     if (typeof typeObj === 'boolean') return 'any'
     const canComment = maxIndent >= 0 && !noComment
     const indentProps = maxIndent > 0
     const comment = canComment ? this.makeComment(typeObj) : ''
-    const typeDeep = (typeObj: Exclude<TypeDefs, boolean>): string => {
-      const nullable = (type: string): string => ('nullable' in typeObj && typeObj.nullable) ? `${type} | null` : type
-      if ('schema' in typeObj) return typeDeep(typeObj.schema)
-      if ('$ref' in typeObj) return (typeObj.$ref in this.schemas) ? typeObj.$ref : 'any'
-      if ('allOf' in typeObj) return typeObj.allOf.map(typeDeep).join(' & ')
+    const unionTypes = (typeObj: Exclude<TypeDefs, boolean>) => {
+      if ('allOf' in typeObj) return typeObj.allOf.map(typeDeep).filter(x => x !== 'any').join(' & ') || 'any'
       if ('oneOf' in typeObj) return typeObj.oneOf.map(typeDeep).join(' | ')
       if ('anyOf' in typeObj) {
         const refs = typeObj.anyOf.filter(x => '$ref' in x).map(typeDeep).filter(x => x !== 'any')
@@ -124,10 +128,15 @@ export abstract class TemplateCommon {
         }
         return [notRefs, combinations(refs)].flat().join(' | ')
       }
-      if ('enum' in typeObj) return nullable(typeObj.enum.map(x => JSON.stringify(x).replace(/"/g, '\'')).join(' | '))
-      if (!('type' in typeObj)) return 'any'
+    }
+    const typeDeep = (typeObj: Exclude<TypeDefs, boolean>): string => {
+      const nullable = (type: string): string => ('nullable' in typeObj && typeObj.nullable) ? `${type} | null` : type
+      if ('schema' in typeObj) return typeDeep(typeObj.schema)
+      if ('$ref' in typeObj) return (typeObj.$ref in this.schemas) ? typeObj.$ref : 'any'
+      if ('enum' in typeObj) return nullable(typeObj.enum.length ? typeObj.enum.map(x => JSON.stringify(x).replace(/"/g, '\'')).join(' | ') : 'never')
+      if (!('type' in typeObj)) return unionTypes(typeObj) || 'any'
       if (typeObj.type === 'file') return 'File'
-      if (typeObj.type === 'array') return `Array<${typeDeep(typeObj.items)}>`.replace('Array<File>', 'File[] | FileList')
+      if (typeObj.type === 'array') return `Array<${typeDeep(typeObj.items || {})}>`.replace('Array<File>', 'File[] | FileList')
       if (typeObj.type === 'object') {
         const { properties, additionalProperties, required = [] } = typeObj
         const entries: [string, Exclude<TypeDefs, boolean>][] = properties ? Object.entries(properties) : []
@@ -140,22 +149,26 @@ export abstract class TemplateCommon {
           if (!validIdentifier.test(name)) name = `'${name.replace(/'/g, '\\\'')}'`
           return `${name + optional}: ${this.typeDeep(value, maxIndent - 1)}`
         })
-        if (!indentProps) return `{ ${items.join(', ')} }`
-        return `{\n${items.join('\n').replace(/^./gm, '  $&')}\n}`
+        const withUnion = (obj: string) => {
+          const union = unionTypes(typeObj)
+          return union ? `${obj} & (${union})` : obj
+        }
+        if (!indentProps) return withUnion(`{ ${items.join(', ')} }`)
+        return withUnion(`{\n${items.join('\n').replace(/^./gm, '  $&')}\n}`)
       }
       if (typeObj.type === 'string' && 'format' in typeObj && typeObj.format === 'binary') return nullable('File')
-      return nullable(typeObj.type)
+      return nullable(primitiveTypeRegex.test(typeObj.type) ? typeObj.type : 'any')
     }
     return typeDeep(typeObj) + prependText.encode(comment)
   }
 
-  protected fixKeys<T extends object> (o?: T): T {
+  public fixKeys<T extends object> (o?: T): T {
     const ret: any = {}
     if (o) Object.entries(o).forEach(([key, value]) => { ret[this.fixTypeName(key)] = value })
     return ret
   }
 
-  protected fixRefDeep (spec: Spec) {
+  public fixRefDeep (spec: Spec) {
     const deep = (o: any) => {
       if (!(o instanceof Object)) return
       if ('$ref' in o) o.$ref = this.fixTypeName(o.$ref)
@@ -165,7 +178,7 @@ export abstract class TemplateCommon {
     deep(spec)
   }
 
-  protected get importTypes () {
+  public get importTypes () {
     const withoutGeneric = _.uniq(Object.keys(this.schemas).map(x => x.replace(/<.+>/, ''))).sort(localeCompare)
     const typeMatches = Object.values(typeMatchMap).flat(2)
     return [withoutGeneric, typeMatches].filter(x => x.length)
@@ -194,13 +207,13 @@ export abstract class TemplateCommon {
       const [{ rawName, genericReplacer, type }] = arr
       const comments = arr.map(x => this.makeComment(x.type, true)).filter(x => x)
       const comment = comments.length ? `${this.comment(comments.join('\n')).trim()}\n` : ''
-      return `${comment}export type ${genericReplacer(`${rawName} = ${this.typeDeep(type, 1, true)}`)}`.replace(prependText.regex, prependText.replacer)
+      return `${comment}export type ${genericReplacer(`${rawName} = ${this.typeDeep(type, 4, true)}`)}`.replace(prependText.regex, prependText.replacer)
     })
     const typeMatch = entries(typeMatchMap).map(([jsType, list]) => list.map(swaggerType => `export type ${swaggerType} = ${jsType}`)).flat().join('\n')
     return [noInspect, ...exports, typeMatch, ''].join('\n')
   }
 
-  protected paramsDoc (parameters: (Parameter | Parameter[])[]) {
+  public paramsDoc (parameters: (Parameter | Parameter[])[]) {
     let paramsArr = parameters.map((x, i) => {
       if (x instanceof Array) {
         x = x.filter(x => x.description)
@@ -217,7 +230,7 @@ export abstract class TemplateCommon {
     return paramsArr.map(({ name, description }) => `@param ${[name, description].filter(x => x).join('  ')}`).join('\n')
   }
 
-  protected documentation (path: string, method: Method) {
+  public documentation (path: string, method: Method) {
     const { deprecated } = method
 
     const { responses, returns } = (() => {
@@ -250,7 +263,7 @@ export abstract class TemplateCommon {
     return this.comment(paragraphs)
   }
 
-  protected pathMethodList (): [string, string, Methods][] {
+  public pathMethodList (): [string, string, Methods][] {
     const { basePath: base, spec } = this
     const paths: { [k in string]: Methods } = spec.paths
     return entries(paths).sort(entriesCompare).map(([path, methods]) => [
@@ -263,7 +276,7 @@ export abstract class TemplateCommon {
     ])
   }
 
-  protected defaultForm () {
+  public defaultForm () {
     type Map = [string, string, MethodTypes, Method] | { [key in string]: Map }
     const map: Map = {}
     this.pathMethodList().forEach(([orgPath, path, methods]) => {
@@ -308,7 +321,7 @@ export abstract class TemplateCommon {
     return { object: deep(map) }
   }
 
-  protected underscoreForm () {
+  public underscoreForm () {
     type Tree = { [paths: string]: Tree | string[] }
     const propTree: Tree = {}
     const entries = this.pathMethodList()
@@ -336,7 +349,7 @@ export abstract class TemplateCommon {
     return tpl(this.defaultForm())
   }
 
-  protected convertParameters (method: Method): Parameter[] {
+  public convertParameters (method: Method): Parameter[] {
     const { parameters = [] } = method
     const ret = parameters.map((parameter): Parameter | undefined => {
       if (!parameter.name) return undefined
@@ -344,7 +357,8 @@ export abstract class TemplateCommon {
       let { in: pos, required = /body|path/.test(pos), name, description = '' } = parameter
       if (pos === 'body') name = '$body'
       if (pos === 'formData') this.hasMultipart = true
-      return { name, valName: camelCase(name), pos, type, required, description }
+      const valName = camelCase(name.replace(/[[\]]/g, ''))
+      return { name, valName, pos, type, required, description }
     }).filter(notNullish)
     if (('requestBody' in method) && method.requestBody) {
       const { required = true, content, description = '' } = method.requestBody
@@ -358,7 +372,7 @@ export abstract class TemplateCommon {
     return this.skipHeader ? ret.filter(x => x.pos !== 'header') : ret
   }
 
-  protected groupParameters (pathStr: string, method: Method) {
+  public groupParameters (pathStr: string, method: Method) {
     const parameters = this.convertParameters(method)
     const [path = [], query = [], header = [], formData = [], rest = []]: Parameter[][] = []
     let body: Parameter | undefined
@@ -395,7 +409,7 @@ export abstract class TemplateCommon {
     }
   }
 
-  protected toArgs (parameters: (Parameter | Parameter[])[]) {
+  public toArgs (parameters: (Parameter | Parameter[])[]) {
     const destructuredObject = (arr: Parameter[]) => {
       const keys = arr.map(x => x.valName).join(', ')
       const types = arr.map(x => `${x.valName}${x.required ? '' : '?'}: ${x.type}`).join(', ')
@@ -408,7 +422,7 @@ export abstract class TemplateCommon {
     }).join(', ')
   }
 
-  protected axiosCall (path: string, methodType: MethodTypes, method: Method) {
+  public axiosCall (path: string, methodType: MethodTypes, method: Method) {
     const { responses } = method
     const { parameters, body, formData, config, header, query } = this.groupParameters(path, method)
 
@@ -436,21 +450,29 @@ export abstract class TemplateCommon {
       axiosParams.push(`{ ${[headers, params, data, config && (`...${config.valName}`)].filter(x => x).join(', ')} }`)
     } else if (config) axiosParams.push(config.valName)
 
-    const type = responses[200] ? this.getResponseType(responses[200]) : 'any'
-    const paramsString = axiosParams.map(x => x || 'undefined').join(', ')
-    return this.axiosArrowFn(this.toArgs(parameters), type, methodType, paramsString)
+    const filterResponse = (filter: RegExp) => _.uniq(keys(responses).filter(key => filter.test(key)).map(key => responses[key] || []).flat().map(x => this.getResponseType(x)).filter(x => x !== 'any'))
+    const responseTypes = filterResponse(/^([23]\d\d|default)$/)
+    const errorTypes = filterResponse(/^[45]\d\d$/)
+    const paramsString = axiosParams.map(x => x || 'undefined').join(', ') || 'any'
+    return this.axiosArrowFn(this.toArgs(parameters), responseTypes, errorTypes, methodType, paramsString)
   }
 
-  protected axiosArrowFn (args: string, returnType: string, methodType: string, params: string) {
-    return `(${args}): $R<${returnType}> => _('${methodType}')(${params})`
+  public axiosArrowFn (args: string, responseTypes: string[], errorTypes: string[], methodType: string, params: string) {
+    const returnType = responseTypes.join(' | ') || 'any'
+    const errorType = errorTypes.join(' | ') || 'any'
+    return `<$T = ${returnType}, $E = ${errorType}>(${args}): $R<$T, $E> => _('${methodType}', ${params})`
   }
 
-  protected exportFormat (object: string) {
+  public get exportCode () {
     const name = this.exportName
-    return `export ${name ? `const ${name} =` : 'default'} ${object}`
+    const code = `($axios = Axios.create($axiosConfig)) => $ep((method: string, ...args: any) => {
+  const promise = ($axios as any)[method](...args)
+  return Object.defineProperty(promise.then((x: any) => x.data), 'response', {value: promise})
+})`
+    return `export ${name ? `const ${name} =` : 'default'} ${code}`
   }
 
-  protected get multipart () {
+  public get multipart () {
     return this.hasMultipart
       ? `const ${Multipart} = (o: any) => {
   if (!(o instanceof Object)) return o
@@ -470,19 +492,22 @@ export abstract class TemplateCommon {
       : ''
   }
 
-  protected get noInspect () { return noInspect }
-  protected pluginTemplate ({ object }: { object: string }) {
-    const { importTypes, multipart, noInspect } = this
+  public get noInspect () { return noInspect }
+  public pluginTemplate ({ object }: { object: string }) {
+    const { importTypes, multipart, noInspect, exportCode } = this
     return `
 ${noInspect}
-import Axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import Axios, { AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 ${importTypes}
-let $axios = Axios.create()
-export const setInstance = (axios: AxiosInstance) => { $axios = axios }
-export const getInstance = () => $axios
-type $R<T> = Promise<T & { $response: AxiosResponse }>
-${this.exportFormat(object)}
-const _ = (method: string) => (...args: any) => ($axios as any)[method](...args).then((x: AxiosResponse) => Object.defineProperty(x.data, '$response', {value: x}))
+export interface $customExtendResponse {}
+interface PromiseEt<T, E> extends Promise<T> {
+  then<R1 = T, R2 = never>(onfulfilled?: ((value: T) => R1 | PromiseLike<R1>) | undefined | null, onrejected?: ((reason: E) => R2 | PromiseLike<R2>) | undefined | null): Promise<R1 | R2>;
+  catch<R1 = never>(onrejected?: ((reason: E) => R1 | PromiseLike<R1>) | undefined | null): Promise<T | R1>;
+}
+type $R<T, E> = PromiseEt<T, E> & { readonly response: PromiseEt<AxiosResponse<T> & $customExtendResponse, AxiosError<E>> }
+export const $axiosConfig: Required<Parameters<AxiosStatic['create']>>[0] = {}
+const $ep = (_: any) => (${object})
+${exportCode}
 ${multipart}
 `.trimStart()
   }

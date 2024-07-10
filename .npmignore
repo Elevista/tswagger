@@ -4,4 +4,5 @@ node_modules
 plugins
 src
 api
+lib
 tsconfig.json

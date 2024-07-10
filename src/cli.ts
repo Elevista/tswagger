@@ -9,7 +9,7 @@ import fetchSpec from './fetchSpec'
 import V3 from './schema/v3/Template'
 import V2 from './schema/v2/Template'
 import { notNullish } from './utils'
-import { CliOptions, Options } from './options'
+import { TSwaggerCliOptions as CliOptions, TSwaggerOptions as Options } from './index'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
@@ -19,7 +19,7 @@ interface Argv extends Partial<CliOptions> { _: [string?] }
 const argvToOptions = ({ _: [$1], src = $1, ...rest }: Argv): Partial<CliOptions> => ({ src, ...rest })
 const defaultOptions = ({
   src = '',
-  pluginsDir = '',
+  pluginsDir = 'lib',
   pluginName = 'api',
   exportName = pluginName,
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),

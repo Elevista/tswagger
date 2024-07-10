@@ -4,6 +4,7 @@ node_modules
 plugins
 dist
 api
+lib
 types
 *.tgz
 /package*

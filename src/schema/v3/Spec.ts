@@ -25,7 +25,7 @@ export interface TypeEnum extends TypeProto {
 
 export interface TypeArray extends TypeProto {
   type: 'array',
-  items: Types
+  items?: Types
 }
 
 export interface TypeObject extends TypeProto<object> {

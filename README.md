@@ -19,7 +19,7 @@ in script code
 import { setAxios, api } from './api'
 import axios from 'axios'
 setInstance(axios.create({ baseURL: 'http://localhost:8080', timeout: 100 })) // optional
-const foo = await api.bar.get()
+const foo = await api().bar.get()
 ```
 
 ### Path param mode
@@ -28,12 +28,12 @@ const foo = await api.bar.get()
 
 ```js
 /* default (1.1.0+) */
-api.foo.bar(1).get(2)
-api.foo.bar.get()
+api().foo.bar(1).get(2)
+api().foo.bar.get()
 
 /* underscore */
-api.foo._bar.get(1, 2)
-api.foo.bar.get()
+api().foo._bar.get(1, 2)
+api().foo.bar.get()
 ```
 
 ## Options
@@ -48,7 +48,7 @@ tswagger argument1 --option1 value1 --option2 value2
 |------------------|----------------------------|------------------------------------------|-------------------------------------|
 | (first argument) | Swagger schema JSON path   | (required)                               | `http://..` or `./foo/swagger.json` |
 | `src`            | same as first argument     | first argument                           | same as above                       |
-| `plugins-dir`    | Directory                  | `''`                                     |                                     |
+| `plugins-dir`    | Directory                  | `lib`                                    |                                     |
 | `plugin-name`    | Name for generated flile   | `api`                                    |                                     |
 | `export-name`    | Export name                | `{plugin-name}`                          | `''`(export default)                |
 | `type-path`      | Path for scheme type file  | `{plugins-dir}/{plugin-name}/{types.ts}` | `./types/models.ts`                 |
@@ -58,10 +58,10 @@ tswagger argument1 --option1 value1 --option2 value2
 
 ### Set options using `tswagger.config`
 
-```js
-import { Options } from 'tswagger'
+```ts
+import { TSwaggerOptions } from 'tswagger'
 
-const option: Partial<Options> = {
+const option: Partial<TSwaggerOptions> = {
   pluginName: 'foo'
 }
 
@@ -71,12 +71,8 @@ export default option
 ### Set options using `package.json`
 ```json
 {
-  "scripts": {
-    "swagger": "tswagger"
-  },
   "tswagger": {
-    "pluginName": "foo",
-    "src": "https://api.server.foo/swagger.json"
+    "pluginsDir": "api"
   }
 }
 ```

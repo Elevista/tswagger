@@ -1,5 +1,5 @@
 import { multipart, multipartCode, promiseEt } from './template'
-import { variableBoundary } from './utils'
+import { variableBoundary } from '../utils'
 
 export const promiseWrapper = `export interface $customExtendResponse {}
 ${promiseEt}

@@ -1,12 +1,12 @@
-import { parametersToTuples } from './parametersToTuples'
-import { Schema } from './spec/schema'
-import { MethodType, PathItem as PathItemV2, Swagger } from './spec/v2'
-import { OpenAPI, PathItem as PathItemV3 } from './spec/v3'
+import { parametersToTuples } from '../parametersToTuples'
+import { Schema } from '../spec/schema'
+import { MethodType, PathItem as PathItemV2, Swagger } from '../spec/v2'
+import { OpenAPI, PathItem as PathItemV3 } from '../spec/v3'
 import { multipart, multipartCode } from './template'
-import { traversePaths } from './traversePaths'
-import { tsDoc } from './tsDoc'
-import { typeOperation } from './typeOperation'
-import { brace, isPresent, toValidName, variableBoundary } from './utils'
+import { traversePaths } from '../traversePaths'
+import { tsDoc } from '../tsDoc'
+import { typeOperation } from '../typeOperation'
+import { brace, isPresent, toValidName, variableBoundary } from '../utils'
 type PathItem = PathItemV2 | PathItemV3
 type Paths = (OpenAPI | Swagger)['paths']
 

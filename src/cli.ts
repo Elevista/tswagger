@@ -8,9 +8,9 @@ import c from 'chalk'
 import fetchSpec from './fetchSpec'
 import { notNullish } from './utils'
 import { TSwaggerCliOptions as CliOptions, TSwaggerOptions as Options } from './index'
-import { genAxiosCode } from './axios'
+import { genAxiosCode } from './gen/axios'
 import { genTypeFile } from './schemaToType'
-import { genRequestCode } from './request'
+import { genRequestCode } from './gen/request'
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')

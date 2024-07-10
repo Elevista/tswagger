@@ -42,6 +42,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./dist/spec/*": "./dist/spec/*.js",
+    "./dist/gen/*": "./dist/gen/*.js",
     "./dist/*": "./dist/*.js",
     "./spec/*": "./dist/spec/*.js",
     "./*": "./dist/*.js"

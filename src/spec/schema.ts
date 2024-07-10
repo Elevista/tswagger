@@ -1,6 +1,4 @@
 /* eslint-disable dot-notation, no-use-before-define */
-import { GetDepth1, RequireProps, GetDepth2 } from '../typeUtils'
-
 interface SchemaBase<T = unknown> {
   title?: string;
   example?: T;
@@ -44,9 +42,13 @@ export const isSchemaArray = (schema?: object): schema is SchemaArray => schema?
 export const isSchemaOf = (schema?: object): schema is SchemaOf => !!(schema?.['oneOf'] || schema?.['allOf'] || schema?.['anyOf'])
 export const isPrimitive = (schema?: object): schema is SchemaString | SchemaNumber | SchemaBoolean => isSchemaString(schema) || isSchemaNumber(schema) || isSchemaBoolean(schema)
 
-type ToObject<T extends { type: 'object' }> = (GetDepth1<T, 'properties'> extends infer P extends {}
-  ? RequireProps<{ [K in keyof P]?: SchemaToType<P[K]> }, GetDepth2<T, 'required', number> & keyof P> : {})
-  & (T extends { oneOf: readonly object[] } ? SchemaToType<T['oneOf'][number]> : {})
+type ToObject<T extends {type: 'object'}> = T extends {properties: infer P, required?: infer R, oneOf?: readonly (infer One)[]} ?
+  (R extends readonly unknown[]
+    ? (R extends readonly (infer V extends keyof P)[] ? {-readonly [K in V]-?: SchemaToType<P[K]>} : {})
+    & (keyof P extends keyof P & R[number] ? {} : {[K in Exclude<keyof P, R[number]>]?: SchemaToType<P[K]>})
+    : {-readonly [K in keyof P]?: SchemaToType<P[K]>}
+  ) & SchemaToType<One>
+  : Record<PropertyKey, unknown>
 
 /**
  * Converts the schema to TypeScript type.
@@ -60,9 +62,9 @@ type ToObject<T extends { type: 'object' }> = (GetDepth1<T, 'properties'> extend
  */
 export type SchemaToType<T> =
   T extends { type: 'object' } ? ToObject<T> :
-  T extends { type: 'array', items: {} } ? Array<SchemaToType<T['items']>> :
-  T extends { type: 'string' } ? T extends { enum: readonly string[] } ? T['enum'][number] : string :
-  T extends { type: 'number' | 'integer' } ? T extends { enum: readonly number[] } ? T['enum'][number] : number :
+  T extends { type: 'array', items: infer Schema } ? SchemaToType<Schema>[] :
+  T extends { type: 'string' } ? T extends { enum: readonly (infer Enum)[] } ? Enum : string :
+  T extends { type: 'number' | 'integer' } ? T extends { enum: readonly (infer Enum)[] } ? Enum : number :
   T extends { type: 'boolean' } ? boolean :
-  T extends { oneOf: readonly object[] } ? SchemaToType<T['oneOf'][number]>
+  T extends { oneOf: readonly (infer Schema)[] } ? SchemaToType<Schema>
   : unknown

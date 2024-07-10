@@ -29,7 +29,7 @@ export const toValidName = (key: PropertyKey) => {
  */
 export const escapeProp = (key: PropertyKey) => {
   const name = String(key)
-  return /^[\p{L}_$][\p{L}\p{N}_$]*$/u.test(name) ? name : `'${name}'`
+  return /^[\p{L}_$][\p{L}\p{N}_$]*$/u.test(name) ? name : `'${name.replace(/'/g, '\\\'')}'`
 }
 
 /**

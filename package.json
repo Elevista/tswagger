@@ -41,8 +41,10 @@
   "main": "./dist/index.js",
   "exports": {
     ".": "./dist/index.js",
-    "./tsDoc": "./dist/tsDoc.js",
-    "./template": "./dist/template.js"
+    "./dist/spec/*": "./dist/spec/*.js",
+    "./dist/*": "./dist/*.js",
+    "./spec/*": "./dist/spec/*.js",
+    "./*": "./dist/*.js"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.6",

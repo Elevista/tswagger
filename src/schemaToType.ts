@@ -38,7 +38,7 @@ const toType = {
     const obj = brace(entries(properties).map(([key, value]) => {
       const tuple = `${escapeProp(key)}${required.includes(`${key}`) ? '' : '?'}: ${next(value)}`
       return `${comment ? docSchema(value) : ''}${tuple}`
-    }).join(indent ? '\n ' : ', '), indent)
+    }).join(indent ? '\n' : ', '), indent)
     return isSchemaOf(rest) ? `${obj} & (${next(rest)})` : obj
   },
   array: (schema: SchemaArray, next: Next) => `Array<${schema.items ? next(schema.items) : 'unknown'}>`,

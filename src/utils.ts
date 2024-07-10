@@ -39,10 +39,11 @@ export const escapeProp = (key: PropertyKey) => {
  *
  * @param str The string to wrap.
  * @param indent The indent to apply.
+ * @param delimiter The multiline delimiter to use.
  * @returns The wrapped string.
  */
-export const brace = (str: string | string[], indent = '  ', [open, close]: '{}' | '[]' | '()' = '{}') => {
-  const text = [str].flat().join(indent ? '\n' : ' ')
+export const brace = (str: string | string[], indent = '  ', delimiter = '', [open, close]: '{}' | '[]' | '()' = '{}') => {
+  const text = [str].flat().join(indent ? `${delimiter}\n` : ' ')
   if (!indent) return `${open}${text.trim().replace(/,$/, '')}${close}`
   return `${open}\n${text.replace(/^/mg, indent)}\n${close}`
 }

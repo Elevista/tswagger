@@ -27,7 +27,7 @@ export const schemaToType = (schema: Schema, comment = true, indent = '  '): str
 
 const toType = {
   boolean: () => 'boolean',
-  number: (schema: SchemaNumber) => schema.enum ? schema.enum.map(x => `'${x}'`).join(' | ') || 'never' : 'number',
+  number: (schema: SchemaNumber) => schema.enum ? schema.enum.length ? schema.enum.join(' | ') : 'never' : 'number',
   string: (schema: SchemaString) => {
     if (schema.format === 'binary' || schema.format === 'byte') return 'File'
     return schema.enum ? schema.enum.map(x => `'${x}'`).join(' | ') || 'never' : 'string'

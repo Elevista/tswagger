@@ -18,9 +18,9 @@ const methodTypes = ['get', 'post', 'put', 'delete'] satisfies MethodType[]
  *
  * @param path The path of the endpoint.
  * @param pathItem The endpoint object.
- * @returns The generated call function code.
+ * @returns The generated entries code.
  */
-const generateApiMethods = (path: string, pathItem: PathItem) => brace(methodTypes.flatMap(methodType => {
+const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.flatMap(methodType => {
   const operation = pathItem[methodType]
   if (!operation) return []
   const { query } = parametersToTuples(operation.parameters ?? [])
@@ -37,7 +37,7 @@ const generateApiMethods = (path: string, pathItem: PathItem) => brace(methodTyp
   ].filter(isPresent)
   const payload = payloads.length ? brace(payloads, '') : undefined
   return `${tsDoc(operation)}${methodType}: ${arrowCode(responseType, tuples, pathTemplate, methodType, payload)}`
-}))
+})
 
 export const arrowCode = (responseType: string, tuples: string[], path: string, methodType: MethodType, payload?: string) =>
    `<$R = ${responseType}>(${tuples.join(', ')}): $P<$R, $T> => _(${[path, `'${methodType}'`, payload].filter(isPresent).join(', ')})`

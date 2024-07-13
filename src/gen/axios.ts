@@ -43,9 +43,9 @@ export const operationTupleConfig = (operation: Operation) => {
  *
  * @param path The path of the endpoint.
  * @param pathItem The endpoint object.
- * @returns The generated call function code.
+ * @returns The generated entries code.
  */
-export const generateApiMethods = (path: string, pathItem: PathItem) => brace(keys(pathItem).filter(isCrud).flatMap(crud => {
+export const generateApiMethods = (path: string, pathItem: PathItem) => keys(pathItem).filter(isCrud).flatMap(crud => {
   const operation = pathItem[crud]
   if (!operation) return []
   const { tuples, entries, data } = operationTupleConfig(operation)
@@ -54,7 +54,7 @@ export const generateApiMethods = (path: string, pathItem: PathItem) => brace(ke
   const config = entries.length ? brace(entries, entries.length > 1 ? '  ' : '') : undefined
   const args = [pathTemplate, hasBody(crud) && (data ?? (config && '{}')), config].filter(isPresent)
   return `${tsDoc(operation)}${crud}: ${axiosArrowCode(responseType, errorType, tuples, crud, args)}`
-}))
+})
 
 export const genAxiosCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '') => {
   const obj = traversePaths(paths, generateApiMethods)

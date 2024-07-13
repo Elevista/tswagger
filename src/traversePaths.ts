@@ -2,8 +2,7 @@ import { uniq } from 'lodash'
 import { parameterToTuple } from './parametersToTuples'
 import { Paths as PathsV2 } from './spec/v2'
 import { Paths as PathsV3, MethodType } from './spec/v3'
-import { brace, keys, notNullish, toValidName } from './utils'
-import { tsDoc } from './tsDoc'
+import { brace, keys, toValidName } from './utils'
 type Paths = PathsV2 | PathsV3;
 type PathItem = Paths[keyof Paths]
 const methodTypes = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'] satisfies MethodType[]
@@ -23,43 +22,45 @@ if (!Array.prototype.with) {
  * Paths in the form of {key} are converted to functions.
  *
  * @param pathsObject Paths object to traverse.
- * @param endpoint Callback function to generate the endpoint.
+ * @param endpoint Callback function to generate the endpoint. Should return entries code.
  * @returns The generated object code.
  * @example
  * input - {'/path1': {get: { ... }, post: { ... }}
  * output - `{path1: {get: (callback result), post: (callback result)}`
  */
-export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathItem: PathItem) => string) => {
+export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathItem: PathItem) => string[]) => {
   const propertyName = (name: string) => name === '' ? '\'\'' : toValidName(name)
-  const delBrace = <T extends string | undefined>(key: T) => key?.replace(/[{}]/g, '') as T
-  const pathSlice = (path: string, to: number) => path.split('/').slice(0, to).join('/')
-  const pathAt = (path: string, index: number) => path.split('/').at(index)
-  const endpoints = keys(pathsObject).flatMap(path => methodTypes.flatMap(methodType =>
-    pathsObject[path][methodType] ? { path, methodType, operation: pathsObject[path][methodType] } : []))
+  const deep = (prefix: string, key: string): string => {
+    if (prefix === '/' && key === '') return brace(endpoint('/', pathsObject['/']))
 
-  const deep = (prefix: string): string => {
-    const paths = prefix.split('/')
-    const key = delBrace(paths.at(-1) ?? '/')
-    const next = (lastPath: string) => {
-      const path = paths.with(paths.length - 1, lastPath).join('/')
-      const nextEndpoints = endpoints.filter((x) => pathSlice(x.path, paths.length) === path)
-      const nextKeys = uniq(nextEndpoints.map((x) => pathAt(x.path, paths.length)).filter(notNullish).map(delBrace))
-      const nextEntries = pathsObject[path]
-        ? endpoint(path, pathsObject[path])
-        : nextKeys.length
-          ? brace(nextKeys.map(key => ({ key, path: `${path}/${key}` }))
-            .map(({ path, key }) => `${tsDoc(pathsObject[path])}${propertyName(key)}: ${deep(path)}`))
-          : undefined
-      const tuple = nextEndpoints.flatMap(({ operation: { parameters = [] } }) => {
-        const parameter = parameters.find(x => x.in === 'path' && x.name === key)
-        return parameter ? parameterToTuple(parameter).tuple : []
-      }).pop()
-      return tuple ? `(${tuple}) => (${nextEntries})` : nextEntries
+    const getNextPath = (next: string) => `${prefix}/${next}`.replace(/\/+/g, '/')
+    const getEndpoints = (key: string) => keys(pathsObject).filter(x => x.startsWith(getNextPath(key)))
+      .map(path => ({ path, operations: methodTypes.flatMap(methodType => pathsObject[path][methodType] || []) }))
+
+    const content = (key: string) => {
+      const path = getNextPath(key)
+      const depth = path.match(/[^/]+/g)?.length ?? 0
+      const endpointEntries = (key && pathsObject[path]) ? endpoint(path, pathsObject[path]) : []
+      const endpointKeys = endpointEntries.map(x => x.match(/^.+?(?=:)/m)?.[0] || '').filter(x => x)
+      const entries = [...endpointEntries, ...uniq(getEndpoints(key)
+        .flatMap(x => x.path.split('/').at(depth + 1)?.replace(/[{}]/g, '') ?? []))
+        .map(key => `${propertyName(endpointKeys.includes(key) ? `_${key}` : key)}: ${deep(path, key)}`)]
+      return entries.length ? brace(entries) : undefined
     }
 
-    const nextFunction = next(`{${key}}`)
-    const nextObject = next(key)
-    return nextFunction && nextObject ? `Object.assign(${nextFunction}, ${nextObject})` : nextFunction || nextObject || ''
+    const deepParamPath = () => {
+      const [found] = getEndpoints(`{${key}}`)
+      if (!found) return
+      for (const { parameters } of found.operations) {
+        const parameter = parameters?.find(x => x.in === 'path' && x.name === key)
+        if (parameter) return `(${parameterToTuple(parameter).tuple}) => (${content(`{${key}}`)})`
+      }
+      return `(${toValidName(key)}: unknown) => (${content(`{${key}}`)})`
+    }
+
+    const paramPath = deepParamPath()
+    const path = content(key)
+    return (paramPath && path) ? `Object.assign(${paramPath}, ${path})` : paramPath || path || '{}'
   }
-  return deep('')
+  return deep('', '')
 }

@@ -18,26 +18,23 @@ const methodTypes = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
  * @param endpoint Callback function to generate the endpoint. Should return entries code.
  * @returns The generated object code.
  * @example
- * input - {'/path1': {get: { ... }, post: { ... }}
- * output - `{path1: {get: (callback result), post: (callback result)}`
+ * input - {'/': {delete: { ... }, '/path1': {get: { ... }, post: { ... }}}
+ * output - `{delete: (Function), path1: {get: (Function), post: (Function)}}}`
  */
 export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathItem: PathItem) => string[]) => {
   const propertyName = (name: string) => name === '' ? '\'\'' : toValidName(name)
   const deep = (prefix: string, key: string): string => {
-    if (prefix === '/' && key === '') return brace(endpoint('/', pathsObject['/']))
-
     const getNextPath = (next: string) => `${prefix}/${next}`.replace(/\/+/g, '/')
     const getEndpoints = (key: string) => keys(pathsObject).filter(x => x.startsWith(getNextPath(key)))
       .map(path => ({ path, operations: methodTypes.flatMap(methodType => pathsObject[path][methodType] || []) }))
 
     const content = (key: string) => {
-      const path = getNextPath(key)
-      const depth = path.match(/[^/]+/g)?.length ?? 0
-      const endpointEntries = (key && pathsObject[path]) ? endpoint(path, pathsObject[path]) : []
-      const endpointKeys = endpointEntries.map(x => x.match(/^.+?(?=:)/m)?.[0] || '').filter(x => x)
-      const entries = [...endpointEntries, ...uniq(getEndpoints(key)
-        .flatMap(x => x.path.split('/').at(depth + 1)?.replace(/[{}]/g, '') ?? []))
-        .map(key => `${propertyName(endpointKeys.includes(key) ? `_${key}` : key)}: ${deep(path, key)}`)]
+      const [path, slash] = [getNextPath(key), /\/(?=.)/g]
+      const methodEntries = pathsObject[path] ? endpoint(path, pathsObject[path]) : []
+      const methods = methodEntries.flatMap(x => x.match(/^.+?(?=:)/m)?.[0] || [])
+      const entries = [...methodEntries, ...uniq(getEndpoints(key)
+        .flatMap(x => x.path.split(slash).at(path.split(slash).length)?.replace(/[{}]/g, '') || []))
+        .map(key => `${propertyName(methods.includes(key) ? `_${key}` : key)}: ${deep(path, key)}`)]
       return entries.length ? brace(entries) : undefined
     }
 

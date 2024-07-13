@@ -3,7 +3,7 @@ import { parametersToTuples } from '../parametersToTuples'
 import { typeOperation } from '../typeOperation'
 import { MethodType, Operation as OperationV2, PathItem as PathItemV2, Swagger } from '../spec/v2'
 import { OpenAPI, Operation as OperationV3, PathItem as PathItemV3 } from '../spec/v3'
-import { brace, isPresent, toValidName, variableBoundary } from '../utils'
+import { brace, isPresent, keys, toValidName, variableBoundary } from '../utils'
 import { tsDoc } from '../tsDoc'
 import { Schema } from '../spec/schema'
 import { traversePaths } from '../traversePaths'
@@ -22,8 +22,9 @@ export const convertBody = (operation: Operation) => {
   }
 }
 
-const methodTypes = ['get', 'post', 'put', 'delete'] satisfies MethodType[]
-const hasBody: typeof methodTypes = ['post', 'put']
+const cruds = ['post', 'get', 'put', 'delete'] satisfies MethodType[]
+const hasBody = (method: string) => (['post', 'put'] satisfies MethodType[]).some(x => x === method)
+const isCrud = (x: string): x is typeof cruds[number] => cruds.some(y => y === x)
 
 export const operationTupleConfig = (operation: Operation) => {
   const { parameters = [] } = operation
@@ -44,15 +45,15 @@ export const operationTupleConfig = (operation: Operation) => {
  * @param pathItem The endpoint object.
  * @returns The generated call function code.
  */
-export const generateApiMethods = (path: string, pathItem: PathItem) => brace(methodTypes.flatMap(methodType => {
-  const operation = pathItem[methodType]
+export const generateApiMethods = (path: string, pathItem: PathItem) => brace(keys(pathItem).filter(isCrud).flatMap(crud => {
+  const operation = pathItem[crud]
   if (!operation) return []
   const { tuples, entries, data } = operationTupleConfig(operation)
   const { responseType = 'unknown', errorType = 'unknown' } = typeOperation(operation)
   const pathTemplate = `\`${path.replace(/{([^}]+)}/g, '${$1}')}\`` // eslint-disable-line no-template-curly-in-string
   const config = entries.length ? brace(entries, entries.length > 1 ? '  ' : '') : undefined
-  const args = [pathTemplate, hasBody.includes(methodType) && (data ?? (config && '{}')), config].filter(isPresent)
-  return `${tsDoc(operation)}${methodType}: ${axiosArrowCode(responseType, errorType, tuples, methodType, args)}`
+  const args = [pathTemplate, hasBody(crud) && (data ?? (config && '{}')), config].filter(isPresent)
+  return `${tsDoc(operation)}${crud}: ${axiosArrowCode(responseType, errorType, tuples, crud, args)}`
 }))
 
 export const genAxiosCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '') => {

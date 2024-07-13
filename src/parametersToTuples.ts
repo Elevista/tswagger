@@ -25,7 +25,7 @@ export const parameterToTuple = (x: ParameterV2 | ParameterV3): TupleInfo => {
   const type = schema
     ? 'type' in schema && schema.type === 'file'
       ? 'File'
-      : schemaToType(schema, false, '')
+      : schemaToType(schema, false, false)
     : 'unknown'
 
   return { entry, tuple: `${label}: ${type}` }

@@ -13,9 +13,9 @@ type Next = (schema: Schema) => string
  * @param indent If there is no indent, it is displayed in one line.
  * @returns The TypeScript type code.
  */
-export const schemaToType = (schema: Schema, comment = true, indent = '  '): string => {
-  const next: Next = (schema: Schema) => schemaToType(schema, comment, indent)
-  if (isSchemaObject(schema)) return toType.object(schema, indent, comment, next)
+export const schemaToType = (schema: Schema, comment = true, multiline = true): string => {
+  const next: Next = (schema: Schema) => schemaToType(schema, comment, multiline)
+  if (isSchemaObject(schema)) return toType.object(schema, comment, multiline, next)
   if (isSchemaArray(schema)) return toType.array(schema, next)
   if (isSchemaOf(schema)) return toType.union(schema, next)
   if (isSchemaString(schema)) return toType.string(schema)
@@ -32,13 +32,13 @@ const toType = {
     if (schema.format === 'binary' || schema.format === 'byte') return 'File'
     return schema.enum ? schema.enum.map(x => `'${x}'`).join(' | ') || 'never' : 'string'
   },
-  object: (schema: SchemaObject, indent: string, comment: boolean, next: Next) => {
+  object: (schema: SchemaObject, comment: boolean, multiline: boolean, next: Next) => {
     const { type, properties, required = [], ...rest } = schema
     if (!properties) return type
     const obj = brace(entries(properties).map(([key, value]) => {
       const tuple = `${escapeProp(key)}${required.includes(`${key}`) ? '' : '?'}: ${next(value)}`
       return `${comment ? docSchema(value) : ''}${tuple}`
-    }), indent, '')
+    }), multiline, '')
     return isSchemaOf(rest) ? `${obj} & (${next(rest)})` : obj
   },
   array: (schema: SchemaArray, next: Next) => `Array<${schema.items ? next(schema.items) : 'unknown'}>`,

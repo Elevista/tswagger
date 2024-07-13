@@ -33,7 +33,7 @@ export const operationTupleConfig = (operation: Operation) => {
   const optional = /^[^:]+\?:/
   const tuples = query.map(x => x.tuple).concat(body.tuple ?? []).sort((a, b) =>
     optional.test(a) === optional.test(b) ? 0 : optional.test(a) ? 1 : -1)
-  const entries = query.length ? [`params: ${brace(query.map(x => x.entry), query.length > 5 ? '  ' : '')}`] : []
+  const entries = query.length ? [`params: ${brace(query.map(x => x.entry), query.length > 5)}`] : []
   return { pathTuples: path.map(x => x.tuple), tuples, entries, data: body.value }
 }
 
@@ -51,7 +51,7 @@ export const generateApiMethods = (path: string, pathItem: PathItem) => keys(pat
   const { tuples, entries, data } = operationTupleConfig(operation)
   const { responseType = 'unknown', errorType = 'unknown' } = typeOperation(operation)
   const pathTemplate = `\`${path.replace(/{([^}]+)}/g, '${$1}')}\`` // eslint-disable-line no-template-curly-in-string
-  const config = entries.length ? brace(entries, entries.length > 1 ? '  ' : '') : undefined
+  const config = entries.length ? brace(entries, entries.length > 1) : undefined
   const args = [pathTemplate, hasBody(crud) && (data ?? (config && '{}')), config].filter(isPresent)
   return `${tsDoc(operation)}${crud}: ${axiosArrowCode(responseType, errorType, tuples, crud, args)}`
 })

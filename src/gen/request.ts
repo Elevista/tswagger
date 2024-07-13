@@ -33,9 +33,9 @@ const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.fla
 
   const payloads = [
     requestType && ((isMultipart) ? `formData: ${multipart}($body)` : 'body: $body'),
-    !!query.length && `params: ${brace(query.map(x => x.entry), query.length > 5 ? '  ' : '')}`,
+    !!query.length && `params: ${brace(query.map(x => x.entry), query.length > 5)}`,
   ].filter(isPresent)
-  const payload = payloads.length ? brace(payloads, '') : undefined
+  const payload = payloads.length ? brace(payloads, false) : undefined
   return `${tsDoc(operation)}${methodType}: ${arrowCode(responseType, tuples, pathTemplate, methodType, payload)}`
 })
 

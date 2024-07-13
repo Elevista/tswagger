@@ -38,14 +38,16 @@ export const escapeProp = (key: PropertyKey) => {
  * If there is no indent, it is displayed in one line.
  *
  * @param str The string to wrap.
- * @param indent The indent to apply.
+ * @param multiline Whether to use multiline. Default is `true`. If str contains a line break, it is automatically set to `true`.
  * @param delimiter The multiline delimiter to use.
  * @returns The wrapped string.
  */
-export const brace = (str: string | string[], indent = '  ', delimiter = ',', [open, close]: '{}' | '[]' | '()' = '{}') => {
-  const text = [str].flat().join(indent ? `${delimiter}\n` : ', ')
-  if (!indent) return `${open}${text.trim().replace(/,$/, '')}${close}`
-  return `${open}\n${text.replace(/^/mg, indent)}\n${close}`
+export const brace = (str: string | string[], multiline = true, delimiter = ',', [open, close]: '{}' | '[]' | '()' = '{}') => {
+  str = [str].flat()
+  if (str.join('').includes('\n')) multiline = true
+  const text = str.join(multiline ? `${delimiter}\n` : ', ')
+  if (!multiline) return `${open}${text.trim().replace(/,$/, '')}${close}`
+  return `${open}\n${text.replace(/^/mg, '  ')}\n${close}`
 }
 
 /**

@@ -13,7 +13,7 @@ export const tsDoc = ({ summary, description, example, default: defaults }: DocP
   description || summary,
   description && summary && `@summary ${summary}`,
   example !== undefined && `@example ${typeof example === 'string' ? example : JSON.stringify(example, null, '  ')}`,
-  defaults !== undefined && `@default ${typeof defaults === 'string' ? defaults : JSON.stringify(defaults, null, '  ')}`,
+  defaults !== undefined && `@default ${typeof defaults === 'string' ? `'${defaults.replace(/'/, '\\\'')}'` : JSON.stringify(defaults, null, '  ')}`,
 ].filter(x => x).join('\n'))
 
 export const docSchema = (schema: Schema) => isReference(schema) ? '' : tsDoc(schema as {})

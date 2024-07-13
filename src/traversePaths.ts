@@ -7,13 +7,6 @@ type Paths = PathsV2 | PathsV3;
 type PathItem = Paths[keyof Paths]
 const methodTypes = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'] satisfies MethodType[]
 
-if (!Array.prototype.with) {
-  // eslint-disable-next-line no-extend-native
-  Array.prototype.with = function <T> (this: T[], index: number, value: T) {
-    return [...this.slice(0, index), value, ...this.slice(index + 1)]
-  }
-}
-
 /**
  * Traverses the path to create an endpoint.
  * Generates object code in a hierarchical structure,

@@ -10,7 +10,7 @@ type Next = (schema: Schema) => string
  *
  * @param schema The schema object.
  * @param comment If true, add comments to object properties.
- * @param indent If there is no indent, it is displayed in one line.
+ * @param multiline Whether to use multiline. Default is `true`. If str contains a line break, it is automatically set to `true`.
  * @returns The TypeScript type code.
  */
 export const schemaToType = (schema: Schema, comment = true, multiline = true): string => {

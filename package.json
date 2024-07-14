@@ -25,6 +25,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "cross-fetch": "^3.0.6",
+    "javascript-stringify": "^2.1.0",
     "lodash": "^4.17.21",
     "mkdirp": "^3.0.1",
     "yargs": "^16.1.0"

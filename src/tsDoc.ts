@@ -1,4 +1,5 @@
 import { Schema, isReference } from './spec/schema'
+import { stringify } from 'javascript-stringify'
 
 export const tsDocForm = (content?: string) => {
   if (!content) return ''
@@ -12,8 +13,8 @@ export type DocProps = { summary?: string, description?: string, example?: unkno
 export const tsDoc = ({ summary, description, example, default: defaults }: DocProps = {}) => tsDocForm([
   description || summary,
   description && summary && `@summary ${summary}`,
-  example !== undefined && `@example ${typeof example === 'string' ? example : JSON.stringify(example, null, '  ')}`,
-  defaults !== undefined && `@default ${typeof defaults === 'string' ? `'${defaults.replace(/'/, '\\\'')}'` : JSON.stringify(defaults, null, '  ')}`,
+  example !== undefined && `@example ${stringify(example)}`,
+  defaults !== undefined && `@default ${stringify(defaults)}`,
 ].filter(x => x).join('\n'))
 
 export const docSchema = (schema: Schema) => isReference(schema) ? '' : tsDoc(schema as {})

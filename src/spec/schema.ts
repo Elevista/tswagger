@@ -43,9 +43,9 @@ export const isSchemaOf = (schema?: object): schema is SchemaOf => !!(schema?.['
 export const isPrimitive = (schema?: object): schema is SchemaString | SchemaNumber | SchemaBoolean => isSchemaString(schema) || isSchemaNumber(schema) || isSchemaBoolean(schema)
 
 type ToObject<T extends {type: 'object'}> = T extends {properties: infer P, required?: infer R, oneOf?: readonly (infer One)[]} ?
-  (R extends readonly unknown[]
-    ? (R extends readonly (infer V extends keyof P)[] ? {-readonly [K in V]-?: SchemaToType<P[K]>} : {})
-    & (keyof P extends keyof P & R[number] ? {} : {[K in Exclude<keyof P, R[number]>]?: SchemaToType<P[K]>})
+  (R extends readonly (infer V extends keyof P)[]
+    ? (keyof P extends Exclude<keyof P, V> ? {} : { -readonly [K in V]-?: SchemaToType<P[K]> })
+    & (keyof P extends keyof P & V ? {} : {[K in Exclude<keyof P, V>]?: SchemaToType<P[K]>})
     : {-readonly [K in keyof P]?: SchemaToType<P[K]>}
   ) & SchemaToType<One>
   : Record<PropertyKey, unknown>

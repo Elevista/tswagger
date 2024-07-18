@@ -57,8 +57,8 @@ export const generateApiMethods = (path: string, pathItem: PathItem) => keys(pat
   return `${tsDoc(operation)}${crud}: ${axiosArrowCode(responseType, errorType, tuplesBrace, crud, args)}`
 })
 
-export const genAxiosCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '') => {
-  const obj = traversePaths(paths, generateApiMethods)
+export const genAxiosCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '', tags?: string[]) => {
+  const obj = traversePaths(paths, generateApiMethods, tags)
   const refTypes = Object.keys(components).map(toValidName).filter(x => variableBoundary(x).test(obj))
   return apiFile(obj, refTypes, relTypePath, exportName)
 }

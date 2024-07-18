@@ -25,7 +25,8 @@ const defaultOptions = ({
   exportName = 'createApi',
   typePath = path.join(pluginsDir, pluginName, 'types.ts'),
   mode = 'axios',
-}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, mode })
+  tag = undefined,
+}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, mode, tag })
 
 const loadConfig = async () => {
   try {
@@ -65,13 +66,15 @@ const generate = async (options: CliOptions) => {
   makeDirs(options)
 
   const { pluginPath, relTypePath } = pluginRelTypePath(options)
+  const { tag = [], typePath, mode, exportName } = options
+  const tags = [tag].flat()
   const schemas = ('openapi' in spec ? spec.components?.schemas : 'swagger' in spec ? spec.definitions : {}) || {}
 
-  fs.writeFileSync(options.typePath, genTypeFile(schemas))
-  console.log(c.blue(' ✔ create  '), options.typePath)
-  const code = (options.mode === 'request' ? genRequestCode : genAxiosCode)(spec.paths, relTypePath, schemas, options.exportName)
+  const code = (mode === 'request' ? genRequestCode : genAxiosCode)(spec.paths, relTypePath, schemas, exportName, tags)
   fs.writeFileSync(pluginPath, code)
   console.log(c.green(' ✔ create  '), pluginPath)
+  fs.writeFileSync(typePath, genTypeFile(schemas, tags.length ? code : undefined))
+  console.log(c.blue(' ✔ create  '), typePath)
 }
 
 const run = async function () {

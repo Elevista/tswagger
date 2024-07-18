@@ -43,8 +43,8 @@ const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.fla
 export const arrowCode = (responseType: string, tuples: string, path: string, methodType: MethodType, payload?: string) =>
    `<$R = ${responseType}>${tuples}: $P<$R, $T> => _(${[path, `'${methodType}'`, payload].filter(isPresent).join(', ')})`
 
-export const genRequestCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '') => {
-  const obj = traversePaths(paths, generateApiMethods)
+export const genRequestCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '', tags?: string[]) => {
+  const obj = traversePaths(paths, generateApiMethods, tags)
   const refTypes = Object.keys(components).map(toValidName).filter(x => variableBoundary(x).test(obj))
 
   return `/* eslint-disable */

@@ -1,7 +1,7 @@
 /* eslint-disable dot-notation */
 import { Schema, SchemaArray, SchemaNumber, SchemaObject, SchemaOf, SchemaString, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
 import { docSchema } from './tsDoc'
-import { brace, entries, escapeProp, toValidName } from './utils'
+import { brace, entries, escapeProp, toValidName, variableBoundary } from './utils'
 
 type Next = (schema: Schema) => string
 
@@ -80,7 +80,12 @@ const combinations = function (str1: string[]) {
  * Generates ts code that exports all schemas as types.
  *
  * @param schemas Type name and schema object pairs.
+ * @param code If code is provided, only the types used in the code are exported.
  * @returns The TypeScript type code.
  */
-export const genTypeFile = (schemas: Record<string, Schema> = {}) => `/* eslint-disable */\n${Object.entries(schemas).map(([name, schema]) =>
-  `${docSchema(schema)}export type ${toValidName(name)} = ${schemaToType(schema)}`).join('\n')}`
+export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string) => `/* eslint-disable */
+${Object.entries(schemas)
+  .map(([name, schema]) => ({ name: toValidName(name), schema }))
+  .filter(({ name }) => !code || variableBoundary(name).test(code))
+  .map(({ name, schema }) =>
+  `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`).join('\n')}`

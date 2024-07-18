@@ -16,5 +16,6 @@ export interface TSwaggerCliOptions {
   exportName: string
   typePath: string
   mode: 'axios' | 'request'
+  tag?: string | string[]
 }
 export type TSwaggerOptions = TSwaggerCliOptions

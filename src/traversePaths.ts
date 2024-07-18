@@ -14,14 +14,16 @@ const methodTypes = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
  * it calls the callback and inserts the value returned to the endpoint position.
  * Paths in the form of {key} are converted to functions.
  *
- * @param pathsObject Paths object to traverse.
+ * @param paths Paths object to traverse.
  * @param endpoint Callback function to generate the endpoint. Should return entries code.
+ * @param tags Tags to filter the paths. If not provided, all paths are traversed.
  * @returns The generated object code.
  * @example
  * input - {'/': {delete: { ... }, '/path1': {get: { ... }, post: { ... }}}
  * output - `{delete: (Function), path1: {get: (Function), post: (Function)}}}`
  */
-export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathItem: PathItem) => string[]) => {
+export const traversePaths = (paths: Paths, endpoint: (path: string, pathItem: PathItem) => string[], tags: string[] = []) => {
+  const pathsObject = filterTags(paths, tags)
   const propertyName = (name: string) => name === '' ? '\'\'' : toValidName(name)
   const deep = (prefix: string, key: string): string => {
     const getNextPath = (next: string) => `${prefix}/${next}`.replace(/\/+/g, '/')
@@ -53,4 +55,26 @@ export const traversePaths = (pathsObject: Paths, endpoint: (path: string, pathI
     return (paramPath && path) ? `Object.assign(${paramPath}, ${path})` : paramPath || path || '{}'
   }
   return deep('', '')
+}
+
+/**
+ * Filters the paths object by tags.
+ *
+ * @param paths Paths object to traverse.
+ * @param tags Tags to filter the paths. If not provided, all paths are traversed.
+ * @returns The filtered paths object.
+ */
+const filterTags = (paths: Paths, tags: string[]) => {
+  if (!tags.length) return paths
+  paths = { ...paths }
+  for (const key of Object.keys(paths)) {
+    const pathItem = { ...paths[key] }
+    let exist = false
+    for (const method of methodTypes) {
+      if (pathItem[method]?.tags?.some(x => tags?.includes(x))) exist = true
+      else delete pathItem[method]
+    }
+    if (!exist) delete paths[key]
+  }
+  return paths
 }

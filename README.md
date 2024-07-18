@@ -72,6 +72,7 @@ npx tswagger argument1 --option1 value1 --option2 value2
 | `plugin-name`    | Name for generated flile   | `api`                                    |                                     |
 | `export-name`    | Export name                | `createApi`                              | `''`(export default)                |
 | `type-path`      | Path for scheme type file  | `{plugins-dir}/{plugin-name}/{types.ts}` | `./types/models.ts`                 |
+| `tag`            | Tags to generate           | (All tags)                               | `--tag AA --tag BB`                 |
 
 ### Set options using `tswagger.config`
 

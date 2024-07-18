@@ -11,8 +11,8 @@ const ${multipart} = (o: any) => {
   for (const [key, v] of Object.entries(o)) {
     const append = (v: any) => v !== undefined && formData.append(key, v instanceof Blob ? v : String(v))
     const files = (files: File | File[] | FileList) => {
-      const list = files instanceof File ? [files] : files
-      for (let i = 0; i < list.length; i++) formData.append(key, list[i], list[i].name)
+      for (const file of files instanceof File ? [files] : files) 
+        formData.append(key, file, file.name)
     }
     if (v instanceof Array) v.forEach(item => (item instanceof File) ? files(item) : append(item))
     else if (v instanceof FileList || v instanceof File) files(v)

@@ -2,77 +2,69 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import path from 'path'
 import fs from 'fs'
-import { defaults, uniqBy } from 'lodash'
 import * as mkdirp from 'mkdirp'
 import c from 'chalk'
 import fetchSpec from './fetchSpec'
-import { notNullish } from './utils'
-import { TSwaggerCliOptions as CliOptions, TSwaggerOptions as Options } from './index'
+import { TSwaggerOptions as Options } from './index'
 import { genAxiosCode } from './gen/axios'
 import { genTypeFile } from './schemaToType'
 import { genRequestCode } from './gen/request'
+const { join: pathJoin, dirname, relative, extname, resolve } = path
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
 try { require('ts-node').register() } catch (e) {}
 
-interface Argv extends Partial<CliOptions> { _: [string?] }
-const argvToOptions = ({ _: [$1], src = $1, ...rest }: Argv): Partial<CliOptions> => ({ src, ...rest })
+interface Argv extends Partial<Options> { _: [string?], $0: unknown }
+const argvToOptions = ({ _: [$1], $0: _, src = $1, ...rest }: Argv): Partial<Options> => (src ? { src, ...rest } : rest)
 const defaultOptions = ({
   src = '',
-  pluginsDir = 'lib',
-  pluginName = 'api',
+  path = 'lib/api',
   exportName = 'createApi',
-  typePath = path.join(pluginsDir, pluginName, 'types.ts'),
+  typePath = pathJoin(path, extname(path) ? '..' : '.', 'types.ts'),
   mode = 'axios',
   tag = undefined,
-}: Partial<Options> = {}): Options => ({ src, pluginsDir, pluginName, exportName, typePath, mode, tag })
+}: Partial<Options> = {}): Options => ({ src, path, exportName, typePath, mode, tag })
 
-const loadConfig = async () => {
+const optionsFromConfig = (): Partial<Options>[] => {
   try {
     const file = require(path.join(process.cwd(), './tswagger.config'))
-    const config = file.default || file || []
-    return [config].flat()
-  } catch (e) {
-    return []
-  }
+    return [file.default || file || []].flat()
+  } catch (e) { return [] }
 }
 
-const optionFromJson = (): Partial<CliOptions> => {
-  const ret: any = {}
+const optionsFromJson = () => {
   try {
     const jsonPath = path.join(process.cwd(), 'package.json')
-    const { tswagger }: { tswagger: Partial<CliOptions> } = require(jsonPath)
-    return tswagger
-  } catch (e) { return ret }
+    const { tswagger }: { tswagger: Partial<Options> } = require(jsonPath)
+    return [tswagger || []].flat()
+  } catch (e) { return [] }
 }
 
-const pluginRelTypePath = ({ pluginsDir, typePath, pluginName }: CliOptions) => {
-  const { join, basename, dirname, relative } = path
-  const sameDir = join(pluginsDir, pluginName) === dirname(typePath)
-  const pluginPath = sameDir ? join(pluginsDir, pluginName, 'index.ts') : join(pluginsDir, `${pluginName}.ts`)
-  const relTypePath = (sameDir ? `./${basename(typePath)}` : relative(dirname(pluginPath), typePath)).replace(/\.ts$/, '')
-  return { pluginPath, relTypePath }
+const makeDirs = ({ path, typePath }: Options) => {
+  mkdirp.sync(dirname(path))
+  mkdirp.sync(dirname(typePath))
 }
 
-const makeDirs = ({ pluginsDir, typePath }: CliOptions) => {
-  mkdirp.sync(pluginsDir)
-  mkdirp.sync(path.dirname(typePath))
-}
-
-const generate = async (options: CliOptions) => {
+const generate = async (options: Options) => {
   if (!options.src) throw new Error('No JSON path provided')
   const spec = await fetchSpec(options.src)
   makeDirs(options)
 
-  const { pluginPath, relTypePath } = pluginRelTypePath(options)
   const { tag = [], typePath, mode, exportName } = options
+  const path = pathJoin(extname(options.path)
+    ? options.path
+    : resolve(options.path) === dirname(resolve(typePath))
+      ? pathJoin(options.path, 'index.ts')
+      : `${options.path}.ts`, '.')
+  let relTypePath = relative(dirname(resolve(path)), resolve(typePath)).replace(/\.ts$/, '')
+  if (!relTypePath.startsWith('.')) relTypePath = `./${relTypePath}`
   const tags = [tag].flat()
   const schemas = ('openapi' in spec ? spec.components?.schemas : 'swagger' in spec ? spec.definitions : {}) || {}
 
   const code = (mode === 'request' ? genRequestCode : genAxiosCode)(spec.paths, relTypePath, schemas, exportName, tags)
-  fs.writeFileSync(pluginPath, code)
-  console.log(c.green(' ✔ create  '), pluginPath)
+  fs.writeFileSync(path, code)
+  console.log(c.green(' ✔ create  '), path)
   fs.writeFileSync(typePath, genTypeFile(schemas, tags.length ? code : undefined))
   console.log(c.blue(' ✔ create  '), typePath)
 }
@@ -81,17 +73,14 @@ const run = async function () {
   console.log(c.bold(c.bgBlue.white('TS') + c.cyan('wagger')), c.gray(`(v${version})`))
   const { argv }: { argv: Argv } = yargs(hideBin(process.argv))
   const cliOption = argvToOptions(argv)
-  const jsonOption = optionFromJson()
-  const configOptions = await loadConfig()
-  let partialOptions = [configOptions, cliOption, jsonOption].flat().filter(notNullish)
-  if (cliOption.pluginName || cliOption.src) {
-    const { pluginName } = defaultOptions()
-    partialOptions = partialOptions.filter(x => (x.pluginName || pluginName) === (cliOption.pluginName || pluginName))
+  const jsonOption = optionsFromJson()
+  const configOptions = optionsFromConfig()
+  for (let i = 0; i < Math.max(jsonOption.length, configOptions.length, 1); i++) {
+    await generate(defaultOptions({
+      ...jsonOption[i],
+      ...configOptions[i],
+      ...cliOption,
+    }))
   }
-  let options = uniqBy(partialOptions.map(option => defaultOptions(defaults({}, cliOption, option, jsonOption)))
-    , x => x.pluginName)
-  if (options.filter(x => x.src).length) options = options.filter(x => x.src)
-
-  for (const option of options) await generate(option)
 }
 run()

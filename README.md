@@ -1,6 +1,7 @@
 # TSwagger
 
-TS-Swagger plugin generator CLI
+TS-Swagger plugin generator CLI  
+CLI to generate Axios or other API client from Swagger schema
 
 [![npm package](https://img.shields.io/npm/v/tswagger.svg?maxAge=2592000&style=flat-square)](https://www.npmjs.com/package/tswagger)
 [![github stars](https://img.shields.io/github/stars/Elevista/tswagger?style=social)](https://github.com/Elevista/tswagger)
@@ -16,7 +17,7 @@ npm i -D tswagger
 in project directory
 
 ```sh
-npx tswagger https://api.server.foo/swagger.json
+npx tswagger https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
 in script code
@@ -57,8 +58,6 @@ const {data} = axiosApi.foo.bar(1).get(2)
 
 ## Options
 
-options priority : command line > `tswagger.config` > `package.json`
-
 ```sh
 npx tswagger argument1 --option1 value1 --option2 value2
 ```
@@ -68,45 +67,31 @@ npx tswagger argument1 --option1 value1 --option2 value2
 | (first argument) | Swagger schema JSON path   | (required)                               | `http://..` or `./foo/swagger.json` |
 | `src`            | same as first argument     | first argument                           | same as above                       |
 | `mode`           | Code generation mode       | `axios`                                  | `request`                           |
-| `plugins-dir`    | Directory                  | `lib`                                    |                                     |
-| `plugin-name`    | Name for generated flile   | `api`                                    |                                     |
+| `path`           | Output path                | `lib/api`                                | `api.ts`                            |
 | `export-name`    | Export name                | `createApi`                              | `''`(export default)                |
-| `type-path`      | Path for scheme type file  | `{plugins-dir}/{plugin-name}/{types.ts}` | `./types/models.ts`                 |
+| `type-path`      | Path for scheme type file  | `{dir of path}/types.ts`                 | `./types/models.ts`                 |
 | `tag`            | Tags to generate           | (All tags)                               | `--tag AA --tag BB`                 |
 
-### Set options using `tswagger.config`
+### Options from file
 
-```ts
-import { TSwaggerOptions } from 'tswagger'
+Options can be an array
 
-const option: Partial<TSwaggerOptions> = {
-  pluginName: 'foo'
-}
+#### `tswagger.config.js`
 
-export default option
+```js
+// import { TSwaggerOptions } from 'tswagger'
+export default { src: '...' } // satisfies Partial<TSwaggerOptions>
 ```
 
-### Set options using `package.json`
+#### `package.json`
 
 ```json
 {
   "tswagger": {
-    "pluginsDir": "api"
+    "src": "..."
   }
 }
 ```
-
-#### `tsconfig.json`
-
-```json
-{
-  "compilerOptions": {
-    "types": ["tswagger/types"]
-  }
-}
-```
-
-and `npm run swagger` or `npx tswagger`
 
 ## License
 

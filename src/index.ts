@@ -11,8 +11,7 @@ export * from './typeOperation'
 
 export interface TSwaggerCliOptions {
   src: string
-  pluginsDir: string
-  pluginName: string
+  path: string
   exportName: string
   typePath: string
   mode: 'axios' | 'request'

@@ -1,9 +1,8 @@
 import { multipart, multipartCode, promiseEt } from './template'
 import { variableBoundary } from '../utils'
 
-export const promiseWrapper = `export interface $customExtendResponse {}
-${promiseEt}
-type $P<R, E> = PromiseEt<R, E> & { readonly response: PromiseEt<AxiosResponse<R> & $customExtendResponse, AxiosError<E>> }`
+export const promiseWrapper = `${promiseEt}
+type $P<R, E> = PromiseEt<R, E> & { readonly response: PromiseEt<AxiosResponse<R>, AxiosError<E>> }`
 
 export const axiosArrowCode = (responseType: string, errorType: string, tuples: string, methodType: string, args: string[]) =>
    `<$R = ${responseType}, $E = ${errorType}>${tuples}: $P<$R, $E> => _(${[`'${methodType}'`, ...args].join(', ')})`

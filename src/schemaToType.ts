@@ -83,9 +83,29 @@ const combinations = function (str1: string[]) {
  * @param code If code is provided, only the types used in the code are exported.
  * @returns The TypeScript type code.
  */
-export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string) => `/* eslint-disable */
-${Object.entries(schemas)
-  .map(([name, schema]) => ({ name: toValidName(name), schema }))
-  .filter(({ name }) => !code || variableBoundary(name).test(code))
-  .map(({ name, schema }) =>
-  `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`).join('\n')}`
+export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string) => {
+  const entries = Object.entries(schemas).map(([name, schema]) => [toValidName(name), schema] as const)
+  const exportCode = ([name, schema]: readonly [string, Schema]) => `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`
+  if (!code) return `/* eslint-disable */\n${entries.map(exportCode).join('\n')}`
+
+  const schemaReferenced: Record<string, undefined | boolean> = {}
+  schemas = Object.fromEntries(entries)
+  const refCheck = (schema?: Schema) => {
+    if (isSchemaObject(schema)) Object.values(schema.properties ?? {}).forEach(refCheck)
+    if (isSchemaArray(schema)) refCheck(schema.items)
+    if (isReference(schema)) {
+      schemaReferenced[schemaToType(schema)] = true
+      refCheck(schemas[schemaToType(schema)])
+    }
+    if (isSchemaOf(schema)) {
+      const of = 'allOf' in schema ? schema.allOf : 'oneOf' in schema ? schema.oneOf : schema.anyOf
+      of.forEach(refCheck)
+    }
+  }
+  entries.filter(([name]) => variableBoundary(name).test(code))
+    .forEach(([name, schema]) => {
+      schemaReferenced[name] = true
+      refCheck(schema)
+    })
+  return `/* eslint-disable */\n${entries.filter(([name]) => schemaReferenced[name]).map(exportCode).join('\n')}`
+}

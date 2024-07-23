@@ -17,7 +17,7 @@ export ${exportName ? `const ${exportName} =` : 'default'} ($axios = Axios.creat
 export const importTypes = (refTypes: string[], refPath: string) => refTypes.length ? `import { ${refTypes.join(', ')} } from '${refPath}'` : ''
 
 export const apiFile = (objectCode: string, refTypes: string[], refPath: string, exportName = '') => `/* eslint-disable */
-import Axios, { AxiosStatic, AxiosResponse, AxiosError } from 'axios'
+import Axios, { AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 ${importTypes(refTypes, refPath)}
 ${promiseWrapper}
 export const $axiosConfig: Required<Parameters<AxiosStatic['create']>>[0] = {}

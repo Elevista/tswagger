@@ -9,10 +9,11 @@ export const tsDocForm = (content?: string) => {
   return multiline ? `/**\n * ${doc}\n */\n` : `/** ${doc} */\n`
 }
 
-export type DocProps = { summary?: string, description?: string, example?: unknown, default?: unknown } & object
-export const tsDoc = ({ summary, description, example, default: defaults }: DocProps = {}) => tsDocForm([
-  description || summary,
-  description && summary && `@summary ${summary}`,
+export type DocProps = { title?: string, summary?: string, description?: string, example?: unknown, default?: unknown } & object
+export const tsDoc = ({ title, summary, description, example, default: defaults }: DocProps = {}) => tsDocForm([
+  title,
+  title && summary ? `@summary ${summary}` : summary,
+  (title || summary) && description ? `@desc ${description}` : description,
   example !== undefined && `@example ${stringify(example)}`,
   defaults !== undefined && `@default ${stringify(defaults)}`,
 ].filter(x => x).join('\n'))

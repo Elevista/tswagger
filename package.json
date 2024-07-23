@@ -15,7 +15,11 @@
   },
   "keywords": [
     "typescript",
-    "swagger"
+    "swagger",
+    "api",
+    "axios",
+    "openapi",
+    "codegen"
   ],
   "files": [
     "dist"

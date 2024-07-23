@@ -22,7 +22,7 @@ export const schemaToType = (schema: Schema, comment = true, multiline = true): 
   if (isSchemaNumber(schema)) return toType.number(schema)
   if (isSchemaBoolean(schema)) return toType.boolean()
   if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
-  return 'never'
+  return 'unknown'
 }
 
 const toType = {

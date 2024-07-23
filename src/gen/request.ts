@@ -48,7 +48,7 @@ export const genRequestCode = (paths: Paths, relTypePath: string, components: Re
   const refTypes = Object.keys(components).map(toValidName).filter(x => variableBoundary(x).test(obj))
 
   return `/* eslint-disable */
-${refTypes.length ? `import { ${refTypes.join(', ')} } from '${relTypePath}'}` : ''}
+${refTypes.length ? `import { ${refTypes.join(', ')} } from '${relTypePath}'` : ''}
 const $ep = <$T>(_) => (${obj})
 
 type $P<R, T> = Promise<{ data: R, response: T }>

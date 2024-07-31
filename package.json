@@ -1,6 +1,6 @@
 {
   "name": "tswagger",
-  "version": "1.1.0-7",
+  "version": "1.1.0-8",
   "description": "TS-Swagger plugin generator CLI",
   "node": ">=18.0.0",
   "bin": {

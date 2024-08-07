@@ -1,5 +1,6 @@
 /* eslint-disable dot-notation */
-import { Schema, SchemaArray, SchemaNumber, SchemaObject, SchemaOf, SchemaString, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
+import { stringify } from 'javascript-stringify'
+import { Schema, SchemaArray, SchemaObject, SchemaOf, SchemaString, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaEnum, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
 import { docSchema } from './tsDoc'
 import { brace, entries, escapeProp, toValidName, variableBoundary } from './utils'
 
@@ -15,11 +16,12 @@ type Next = (schema: Schema) => string
  */
 export const schemaToType = (schema: Schema, comment = true, multiline = true): string => {
   const next: Next = (schema: Schema) => schemaToType(schema, comment, multiline)
+  if (isSchemaEnum(schema)) return schema.enum.map(x => stringify(x)).join(' | ') || 'never'
   if (isSchemaObject(schema)) return toType.object(schema, comment, multiline, next)
   if (isSchemaArray(schema)) return toType.array(schema, next)
   if (isSchemaOf(schema)) return toType.union(schema, next)
   if (isSchemaString(schema)) return toType.string(schema)
-  if (isSchemaNumber(schema)) return toType.number(schema)
+  if (isSchemaNumber(schema)) return toType.number()
   if (isSchemaBoolean(schema)) return toType.boolean()
   if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
   return 'unknown'
@@ -27,11 +29,8 @@ export const schemaToType = (schema: Schema, comment = true, multiline = true): 
 
 const toType = {
   boolean: () => 'boolean',
-  number: (schema: SchemaNumber) => schema.enum ? schema.enum.length ? schema.enum.join(' | ') : 'never' : 'number',
-  string: (schema: SchemaString) => {
-    if (schema.format === 'binary' || schema.format === 'byte') return 'File'
-    return schema.enum ? schema.enum.map(x => `'${x}'`).join(' | ') || 'never' : 'string'
-  },
+  number: () => 'number',
+  string: (schema: SchemaString) => (schema.format === 'binary' || schema.format === 'byte') ? 'File' : 'string',
   object: (schema: SchemaObject, comment: boolean, multiline: boolean, next: Next) => {
     const { type, properties, required = [], ...rest } = schema
     if (!properties) return type

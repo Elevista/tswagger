@@ -39,6 +39,7 @@ export const isSchemaNumber = (schema?: object): schema is SchemaNumber => schem
 export const isSchemaBoolean = (schema?: object): schema is SchemaBoolean => schema?.['type'] === 'boolean'
 export const isSchemaObject = (schema?: object): schema is SchemaObject => schema?.['type'] === 'object'
 export const isSchemaArray = (schema?: object): schema is SchemaArray => schema?.['type'] === 'array'
+export const isSchemaEnum = (schema?: object): schema is {enum: readonly unknown[]} => Array.isArray(schema?.['enum'])
 export const isSchemaOf = (schema?: object): schema is SchemaOf => !!(schema?.['oneOf'] || schema?.['allOf'] || schema?.['anyOf'])
 export const isPrimitive = (schema?: object): schema is SchemaString | SchemaNumber | SchemaBoolean => isSchemaString(schema) || isSchemaNumber(schema) || isSchemaBoolean(schema)
 

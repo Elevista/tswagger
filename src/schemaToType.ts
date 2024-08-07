@@ -95,9 +95,10 @@ export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string)
     if (isSchemaArray(schema)) refCheck(schema.items)
     if (isReference(schema)) {
       const type = schemaToType(schema)
-      if (schemaReferenced[type]) return
-      schemaReferenced[type] = true
-      refCheck(schemas[type])
+      if (!schemaReferenced[type]) {
+        schemaReferenced[type] = true
+        refCheck(schemas[type])
+      }
     }
     if (isSchemaOf(schema)) {
       const of = 'allOf' in schema ? schema.allOf : 'oneOf' in schema ? schema.oneOf : schema.anyOf

@@ -62,10 +62,11 @@ type ToObject<T extends {type: 'object'}> = T extends {properties: infer P, requ
  * ```
  */
 export type SchemaToType<T> =
+  T extends { enum: readonly (infer Enum)[] } ? Enum :
+  T extends { type: 'boolean' } ? boolean :
+  T extends { type: 'string' } ? string :
+  T extends { type: 'number' | 'integer' } ? number :
   T extends { type: 'object' } ? ToObject<T> :
   T extends { type: 'array', items: infer Schema } ? SchemaToType<Schema>[] :
-  T extends { type: 'string' } ? T extends { enum: readonly (infer Enum)[] } ? Enum : string :
-  T extends { type: 'number' | 'integer' } ? T extends { enum: readonly (infer Enum)[] } ? Enum : number :
-  T extends { type: 'boolean' } ? boolean :
   T extends { oneOf: readonly (infer Schema)[] } ? SchemaToType<Schema>
   : unknown

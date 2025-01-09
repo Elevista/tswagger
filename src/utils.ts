@@ -1,4 +1,6 @@
 import { UnionToIntersection } from './typeUtils'
+import { OpenAPI } from './spec/v3'
+import { cloneDeep, get } from 'lodash'
 
 export const notNullish = <T>(value: T | null | undefined): value is T => (value ?? undefined) !== undefined
 export const isPresent = <T>(value: T | false | null | undefined): value is T => !!value || value === 0 || value === ''
@@ -60,3 +62,22 @@ export const variableBoundary = (varName: string, flag = '') => new RegExp([
   varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
   /(?![\p{L}\p{N}_$])/u.source, // boundary
 ].join(''), `u${flag}`)
+
+/**
+ * Resolves all $refs except schemas in the OpenAPI v3.0 spec.
+ * @param spec The OpenAPI v3.0 spec.
+ * @returns The resolved OpenAPI v3.0 spec.
+ */
+export const resolveRefs = (spec: OpenAPI): OpenAPI => {
+  spec = cloneDeep(spec)
+  const deep = (value: unknown, parent: object = {}, key: string | number = '') => {
+    if (!(value instanceof Object)) return
+    if ('$ref' in value && typeof value.$ref === 'string' && /^#\/components\/(?!schemas\/)/.test(value.$ref)) {
+      parent[key] = get(spec.components, value.$ref.replace(/^#\/components\//, '').replace(/\//g, '.')) as unknown
+    }
+    Object.entries(value).forEach(([k, v]) => { deep(v, value, k) })
+  }
+
+  deep(spec, undefined, undefined)
+  return spec
+}

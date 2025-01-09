@@ -28,7 +28,7 @@ export interface SchemaObject extends SchemaBase<Record<string, unknown>> {
 }
 
 export interface SchemaArray extends SchemaBase<unknown[]> { type: 'array'; items?: Schema;}
-export interface Reference { $ref: `#/${'components/schemas' | 'definitions'}/${string}` }
+export interface Reference { $ref: `#/${`components/${string}` | 'definitions'}/${string}` }
 
 export type SchemaOf = SchemaBase & ({allOf: Schema[]} | {anyOf: Schema[]} | {oneOf: Schema[]})
 export type Schema = SchemaArray | SchemaObject | SchemaBoolean | SchemaString | SchemaNumber | SchemaOf | Reference

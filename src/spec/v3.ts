@@ -13,10 +13,10 @@ export interface OpenAPI {
 
 export interface Components {
   schemas: Record<string, Schema>;
-  // responses?: Record<string, Response | Reference>; // not support
-  // parameters?: Record<string, Parameter | Reference>; // not support
+  responses?: Record<string, Response | Reference>;
+  parameters?: Record<string, Parameter | Reference>;
+  requestBodies?: Record<string, RequestBody | Reference>;
   // examples?: Record<string, Example | Reference>; // not support
-  // requestBodies?: Record<string, RequestBody | Reference>; // not support
   // headers?: Record<string, Header | Reference> // not support
 }
 export type Paths = Record<string, PathItem>

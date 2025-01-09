@@ -9,6 +9,7 @@ import { TSwaggerOptions as Options } from './index'
 import { genAxiosCode } from './gen/axios'
 import { genTypeFile } from './schemaToType'
 import { genRequestCode } from './gen/request'
+import { resolveRefs } from './utils'
 const { join: pathJoin, dirname, relative, extname, resolve } = path
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
@@ -48,7 +49,7 @@ const makeDirs = ({ path, typePath }: Options) => {
 
 const generate = async (options: Options) => {
   if (!options.src) throw new Error('No JSON path provided')
-  const spec = await fetchSpec(options.src)
+  let spec = await fetchSpec(options.src)
   makeDirs(options)
 
   const { tag = [], typePath, mode, exportName } = options
@@ -61,6 +62,7 @@ const generate = async (options: Options) => {
   if (!relTypePath.startsWith('.')) relTypePath = `./${relTypePath}`
   const tags = [tag].flat()
   const schemas = ('openapi' in spec ? spec.components?.schemas : 'swagger' in spec ? spec.definitions : {}) || {}
+  if ('openapi' in spec) spec = resolveRefs(spec)
 
   const code = (mode === 'request' ? genRequestCode : genAxiosCode)(spec.paths, relTypePath, schemas, exportName, tags)
   fs.writeFileSync(path, code)

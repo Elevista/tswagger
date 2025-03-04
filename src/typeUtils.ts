@@ -15,20 +15,10 @@ export type PromiseResult<T extends ((...args: any) => Promise<any>) | Promise<a
 
   type Key = string | number | symbol
 
-export type GetDepth1<T, D1 extends Key> =
-T extends {[s in D1]: infer U} ? U : undefined
-
-export type GetDepth2<T, D1 extends Key, D2 extends Key> =
-T extends {[s in D1]: {[s in D2]: infer U}} ? U : undefined
-
-export type GetDepth3<T, D1 extends Key, D2 extends Key, D3 extends Key> =
-T extends {[s in D1]: {[s in D2]: {[s in D3]: infer U}}} ? U : undefined
-
-export type GetDepth4<T, D1 extends Key, D2 extends Key, D3 extends Key, D4 extends Key> =
-T extends {[s in D1]: {[s in D2]: {[s in D3]: {[s in D4]: infer U}}}} ? U : undefined
-
-export type GetDepth5<T, D1 extends Key, D2 extends Key, D3 extends Key, D4 extends Key, D5 extends Key> =
-T extends {[s in D1]: {[s in D2]: {[s in D3]: {[s in D4]: {[s in D5]: infer U}}}}} ? U : undefined
+export type Get<T, Path extends Key, _ = never> = Path extends `${infer Key}.${infer Rest}` ? Get<Get<T, Key>, Rest, _>
+  : Path extends `${infer Key}[]`
+  ? Get<T, Key, _> extends Array<infer U> ? U : _
+  : T extends { [s in Path]?: infer U } ? U : _
 
 export type Or<T, U> = T extends null | undefined | never
   ? U extends null | undefined | never ? never : U : T

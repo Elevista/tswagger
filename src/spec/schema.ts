@@ -42,6 +42,7 @@ export const isSchemaArray = (schema?: object): schema is SchemaArray => schema?
 export const isSchemaEnum = (schema?: object): schema is {enum: readonly unknown[]} => Array.isArray(schema?.['enum'])
 export const isSchemaOf = (schema?: object): schema is SchemaOf => !!(schema?.['oneOf'] || schema?.['allOf'] || schema?.['anyOf'])
 export const isPrimitive = (schema?: object): schema is SchemaString | SchemaNumber | SchemaBoolean => isSchemaString(schema) || isSchemaNumber(schema) || isSchemaBoolean(schema)
+export const isJsonSchema = (schema?: object): schema is Schema => isSchemaArray(schema) || isSchemaObject(schema) || isSchemaBoolean(schema) || isSchemaString(schema) || isSchemaNumber(schema) || isSchemaOf(schema) || isReference(schema)
 
 type ToObject<T extends {type: 'object'}> = T extends {properties: infer P, required?: infer R, oneOf?: readonly (infer One)[]} ?
   (R extends readonly (infer V extends keyof P)[]

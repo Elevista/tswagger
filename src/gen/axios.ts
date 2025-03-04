@@ -28,12 +28,13 @@ const isCrud = (x: string): x is typeof cruds[number] => cruds.some(y => y === x
 
 export const operationTupleConfig = (operation: Operation) => {
   const { parameters = [] } = operation
-  const { query, path } = parametersToTuples(parameters, true)
+  const queryAsObject = parameters.filter(x => x.in === 'query').length > 3
+  const { query, path } = parametersToTuples(parameters, true, queryAsObject)
   const body = convertBody(operation)
   const optional = /^.+?\?:/m
   const tuples = query.map(x => x.tuple).concat(body.tuple ?? []).sort((a, b) =>
     optional.test(a) === optional.test(b) ? 0 : optional.test(a) ? 1 : -1)
-  const entries = query.length ? [`params: ${brace(query.map(x => x.entry), false)}`] : []
+  const entries = query.length ? [`params: ${queryAsObject ? query[0].entry : brace(query.map(x => x.entry), false)}`] : []
   tuples.push('$config?: AxiosRequestConfig')
   entries.push('...$config')
   const config = entries.length === 1 ? '$config' : brace(entries, entries.length > 2)

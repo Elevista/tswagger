@@ -23,7 +23,8 @@ const methodTypes = ['get', 'post', 'put', 'delete'] satisfies MethodType[]
 const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.flatMap(methodType => {
   const operation = pathItem[methodType]
   if (!operation) return []
-  const { query } = parametersToTuples(operation.parameters ?? [], true)
+  const queryAsObject = (operation.parameters?.filter(x => x.in === 'query').length ?? 0) > 3
+  const { query } = parametersToTuples(operation.parameters ?? [], true, queryAsObject)
   const { responseType = 'unknown', requestType, isMultipart, required } = typeOperation(operation)
   const optional = /^.+?\?:/m
   const tuples = query.map(x => x.tuple).concat(requestType ? `$body${required ? '' : '?'}: ${requestType}` : []).sort((a, b) =>
@@ -33,7 +34,7 @@ const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.fla
 
   const payloads = [
     requestType && ((isMultipart) ? `formData: ${multipart}($body)` : 'body: $body'),
-    !!query.length && `params: ${brace(query.map(x => x.entry), false)}`,
+    !!query.length && `params: ${queryAsObject ? query[0].entry : brace(query.map(x => x.entry), false)}`,
   ].filter(isPresent)
   const payload = payloads.length ? brace(payloads, false) : undefined
   const tuplesBrace = brace(tuples, tuples.join('').length > 100, undefined, '()')

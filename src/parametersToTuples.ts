@@ -43,11 +43,24 @@ export const parameterToTuple = (x: ParameterV2 | ParameterV3, comment?: boolean
   return { entry, tuple: `${doc}${label}: ${type}` }
 }
 
-export const parametersToTuples = (parameters: Parameter[], comment?: boolean) => {
+/**
+ * Converts an array of parameters into a record of tuples categorized by their location (`in` property).
+ *
+ * @param parameters - An array of `Parameter` objects to be converted.
+ * @param comment - An optional boolean to include comments in the tuples.
+ * @param queryAsObject - An optional boolean to treat query parameters as a single object.
+ * @returns A record where each key corresponds to a parameter location (`in` property) and the value is an array of tuples.
+ */
+export const parametersToTuples = (parameters: Parameter[], comment?: boolean, queryAsObject = false) => {
   const ret: Record<Parameter['in'], ReturnType<typeof parameterToTuple>[]> = {
     query: [], header: [], formData: [], path: [], body: [], cookie: [],
   }
   parameters.forEach(x => ret[x.in].push(parameterToTuple(x, comment)))
+  if (queryAsObject) {
+    const parametersInQuery = parameters.filter((x): x is typeof x & { in: 'query' } => x.in === 'query')
+    const schema = parametersToSchemaObject(parametersInQuery)
+    ret.query = [parameterToTuple({ in: 'query', name: '$params', schema, required: !!schema.required.length }, comment)]
+  }
   return ret
 }
 

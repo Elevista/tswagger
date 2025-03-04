@@ -16,6 +16,7 @@ type Next = (schema: Schema) => string
  */
 export const schemaToType = (schema: Schema, comment = true, multiline = true): string => {
   const next: Next = (schema: Schema) => schemaToType(schema, comment, multiline)
+  if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
   if (isSchemaEnum(schema)) return schema.enum.map(x => stringify(x)).join(' | ') || 'never'
   if (isSchemaObject(schema)) return toType.object(schema, comment, multiline, next)
   if (isSchemaArray(schema)) return toType.array(schema, next)
@@ -23,7 +24,6 @@ export const schemaToType = (schema: Schema, comment = true, multiline = true): 
   if (isSchemaString(schema)) return toType.string(schema)
   if (isSchemaNumber(schema)) return toType.number()
   if (isSchemaBoolean(schema)) return toType.boolean()
-  if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
   return 'unknown'
 }
 

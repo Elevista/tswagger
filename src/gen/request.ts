@@ -50,11 +50,11 @@ export const genRequestCode = (paths: Paths, relTypePath: string, components: Re
 
   return `/* eslint-disable */
 ${refTypes.length ? `import { ${refTypes.join(', ')} } from '${relTypePath}'` : ''}
-const $ep = <$T>(_) => (${obj})
+const $ep = <$T>(_:any) => (${obj})
 
 type $P<R, T> = Promise<{ data: R, response: T }>
 export ${exportName ? `const ${exportName} =` : 'default'} <T>(request: (path: string, method: string, payload: { params?: Record<string, unknown>, body?: Object, formData?: FormData }) => Promise<T>,
-  getData: (request: T) => any) => $ep<T>((path, method, payload) => request(path, method, payload ?? {}).then(async response => ({ data: await getData(response), response })))
+  getData: (request: T) => any) => $ep<T>((path:any, method:any, payload:any) => request(path, method, payload ?? {}).then(async response => ({ data: await getData(response), response })))
 ${variableBoundary(multipart).test(obj) ? multipartCode : ''}
 `
 }

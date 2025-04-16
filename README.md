@@ -39,12 +39,15 @@ npx tswagger https://api.server.foo/swagger.json --mode request
 import { createApi } from './lib/api'
 const fetchApi = createApi((path, method, { params, formData, body }) => {
   const url = new URL(`http://localhost${path}`)
-  const url.searchParams = (...)
+  // url.search = qs.stringify(params, { arrayFormat: 'brackets' })
   return fetch(url, {
     method,
-    body: formData ?? body ?? JSON.stringify(body),
+    body: formData ?? (body && JSON.stringify(body)),
   })
-}, response => response.json())
+}, response => {
+  if (response.status >= 400) throw new Error(...)
+  return response.json()
+})
 const {data} = await fetchApi.foo.bar(1).get(2) // GET /foo/{bar} 
 fetchApi.foo.bar.get() // GET /foo/bar
 

@@ -46,6 +46,7 @@ export const escapeProp = (key: PropertyKey) => {
  */
 export const brace = (str: string | string[], multiline = true, delimiter = ',', [open, close]: '{}' | '[]' | '()' = '{}') => {
   str = [str].flat()
+  if (str.length === 0) return open + close
   if (str.join('').includes('\n')) multiline = true
   const text = str.join(multiline ? `${delimiter}\n` : ', ')
   if (!multiline) return `${open}${text.trim().replace(/,$/, '')}${close}`

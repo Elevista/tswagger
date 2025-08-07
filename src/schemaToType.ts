@@ -32,12 +32,17 @@ const toType = {
   number: () => 'number',
   string: (schema: SchemaString) => (schema.format === 'binary' || schema.format === 'byte') ? 'File' : 'string',
   object: (schema: SchemaObject, comment: boolean, multiline: boolean, next: Next) => {
-    const { type, properties, required = [], ...rest } = schema
-    if (!properties) return type
-    const obj = brace(entries(properties).map(([key, value]) => {
+    const { type: _, properties = {}, additionalProperties, required = [], ...rest } = schema
+    let obj = brace(entries(properties).map(([key, value]) => {
       const tuple = `${escapeProp(key)}${required.includes(`${key}`) ? '' : '?'}: ${next(value)}`
       return `${comment ? docSchema(value) : ''}${tuple}`
     }), multiline, '')
+    if (additionalProperties instanceof Object && Object.keys(additionalProperties).length) {
+      const value = obj === '{}' ? next(additionalProperties) : `${next(additionalProperties)} | ${obj}[keyof ${obj}]`
+      const record = `Record<PropertyKey, ${value}>`
+      obj = obj === '{}' ? record : `(${obj} & ${record})`
+    }
+    if (obj === '{}' && additionalProperties === false) obj = 'Record<PropertyKey, never>'
     return isSchemaOf(rest) ? `${obj} & (${next(rest)})` : obj
   },
   array: (schema: SchemaArray, next: Next) => `Array<${schema.items ? next(schema.items) : 'unknown'}>`,

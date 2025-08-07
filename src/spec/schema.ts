@@ -23,6 +23,7 @@ export interface SchemaBoolean extends SchemaBase<boolean> { type: 'boolean'; }
 export interface SchemaObject extends SchemaBase<Record<string, unknown>> {
   type: 'object';
   properties?: { [propertyName: string]: Schema };
+  additionalProperties?: boolean | Schema;
   required?: readonly string[];
   oneOf?: Schema[];
 }

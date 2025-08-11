@@ -89,7 +89,10 @@ const combinations = function (str1: string[]) {
  */
 export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string) => {
   const entries = Object.entries(schemas).map(([name, schema]) => [toValidName(name), schema] as const)
-  const exportCode = ([name, schema]: readonly [string, Schema]) => `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`
+  const exportCode = ([name, schema]: readonly [string, Schema]) =>
+    isSchemaObject(schema) && schema.additionalProperties === undefined && !isSchemaOf(schema)
+      ? `${docSchema(schema)}export interface ${name} ${schemaToType(schema)}`
+      : `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`
   if (!code) return `/* eslint-disable */\n${entries.map(exportCode).join('\n')}`
 
   const schemaReferenced: Record<string, undefined | boolean> = {}

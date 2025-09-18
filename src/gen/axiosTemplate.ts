@@ -9,10 +9,8 @@ export const axiosArrowCode = (responseType: string, errorType: string, tuples: 
 
 export const exportCode = (exportName: string, axiosCode: string) => `
 const $ep = (_: any) => (${axiosCode})\n
-export ${exportName ? `const ${exportName} =` : 'default'} ($axios = Axios.create($axiosConfig)) => $ep((method: string, ...args: any) => {
-  const promise = ($axios as any)[method](...args)
-  return Object.defineProperty(promise.then((x: any) => x.data), 'response', {value: promise})
-})`
+export ${exportName ? `const ${exportName} =` : 'default'} ($axios = Axios.create($axiosConfig)) => $ep((method: string, ...args: any) => 
+  new Proxy(($axios as any)[method](...args), { get: (p, k, r) => k === 'response' ? p : k === 'then' ? (f: any, r: any) => p.then((x: any) => f?.(x.data), r) : Reflect.get(p, k, r) }))`
 
 export const importTypes = (refTypes: string[], refPath: string) => refTypes.length ? `import { ${refTypes.join(', ')} } from '${refPath}'` : ''
 

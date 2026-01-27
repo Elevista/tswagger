@@ -62,6 +62,7 @@ export const generateApiMethods = (path: string, pathItem: PathItem, comment = t
 
 export const genAxiosCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '', tags?: string[]) => {
   const obj = traversePaths(paths, generateApiMethods, tags)
-  const refTypes = Object.keys(components).map(toValidName).filter(x => variableBoundary(x).test(obj))
+  const withoutComment = traversePaths(paths, (path, item) => generateApiMethods(path, item, false), tags)
+  const refTypes = Object.keys(components).map(toValidName).filter(x => variableBoundary(x).test(withoutComment))
   return apiFile(obj, refTypes, relTypePath, exportName)
 }

@@ -48,10 +48,10 @@ export const getOperationSchema = (operation: Operation) => {
  * @param operation The operation object.
  * @returns The type for the request, response, and errors in the operation.
  */
-export const typeOperation = (operation: Operation) => {
+export const typeOperation = (operation: Operation, comment = true) => {
   const { isMultipart, required, requestSchema, responseSchema, errorSchemas } = getOperationSchema(operation)
-  const requestType = requestSchema && schemaToType(requestSchema, true, false)
-  const responseType = responseSchema && schemaToType(responseSchema, true, false)
+  const requestType = requestSchema && schemaToType(requestSchema, comment, false)
+  const responseType = responseSchema && schemaToType(responseSchema, comment, false)
   const errorType = errorSchemas.length ? uniq(errorSchemas.map(schema => schemaToType(schema, false, false))).join(' | ') : undefined
   return {
     /** Indicates whether the request is multipart/form-data. */

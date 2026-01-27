@@ -12,8 +12,8 @@ type Paths = (OpenAPI | Swagger)['paths']
 type Operation = OperationV2 | OperationV3
 type PathItem = PathItemV2 | PathItemV3
 
-export const convertBody = (operation: Operation) => {
-  const { requestType, required, isMultipart } = typeOperation(operation)
+export const convertBody = (operation: Operation, comment = true) => {
+  const { requestType, required, isMultipart } = typeOperation(operation, comment)
   if (!requestType) return {}
   const body = '$body'
   return {
@@ -26,11 +26,11 @@ const cruds = ['post', 'get', 'put', 'delete'] satisfies MethodType[]
 const hasBody = (method: string) => (['post', 'put'] satisfies MethodType[]).some(x => x === method)
 const isCrud = (x: string): x is typeof cruds[number] => cruds.some(y => y === x)
 
-export const operationTupleConfig = (operation: Operation) => {
+export const operationTupleConfig = (operation: Operation, comment = true) => {
   const { parameters = [] } = operation
   const queryAsObject = parameters.filter(x => x.in === 'query').length > 3
-  const { query, path } = parametersToTuples(parameters, true, queryAsObject)
-  const body = convertBody(operation)
+  const { query, path } = parametersToTuples(parameters, comment, queryAsObject)
+  const body = convertBody(operation, comment)
   const optional = /^.+?\?:/m
   const tuples = query.map(x => x.tuple).concat(body.tuple ?? []).sort((a, b) =>
     optional.test(a) === optional.test(b) ? 0 : optional.test(a) ? 1 : -1)
@@ -49,15 +49,15 @@ export const operationTupleConfig = (operation: Operation) => {
  * @param pathItem The endpoint object.
  * @returns The generated entries code.
  */
-export const generateApiMethods = (path: string, pathItem: PathItem) => keys(pathItem).filter(isCrud).flatMap(crud => {
+export const generateApiMethods = (path: string, pathItem: PathItem, comment = true) => keys(pathItem).filter(isCrud).flatMap(crud => {
   const operation = pathItem[crud]
   if (!operation) return []
-  const { tuples, config, data } = operationTupleConfig(operation)
-  const { responseType = 'unknown', errorType = 'unknown' } = typeOperation(operation)
+  const { tuples, config, data } = operationTupleConfig(operation, comment)
+  const { responseType = 'unknown', errorType = 'unknown' } = typeOperation(operation, comment)
   const pathTemplate = `\`${path.replace(/{([^}]+)}/g, '${$1}')}\`` // eslint-disable-line no-template-curly-in-string
   const args = [pathTemplate, hasBody(crud) && (data ?? (config && 'undefined')), config].filter(isPresent)
   const tuplesBrace = brace(tuples, tuples.join('').length > 100, undefined, '()')
-  return `${tsDoc(operation)}${crud}: ${axiosArrowCode(responseType, errorType, tuplesBrace, crud, args)}`
+  return `${comment ? tsDoc(operation) : ''}${crud}: ${axiosArrowCode(responseType, errorType, tuplesBrace, crud, args)}`
 })
 
 export const genAxiosCode = (paths: Paths, relTypePath: string, components: Record<string, Schema> = {}, exportName = '', tags?: string[]) => {

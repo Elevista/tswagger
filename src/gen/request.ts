@@ -20,12 +20,12 @@ const methodTypes = ['get', 'post', 'put', 'delete'] satisfies MethodType[]
  * @param pathItem The endpoint object.
  * @returns The generated entries code.
  */
-const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.flatMap(methodType => {
+const generateApiMethods = (path: string, pathItem: PathItem, comment = true) => methodTypes.flatMap(methodType => {
   const operation = pathItem[methodType]
   if (!operation) return []
   const queryAsObject = (operation.parameters?.filter(x => x.in === 'query').length ?? 0) > 3
-  const { query } = parametersToTuples(operation.parameters ?? [], true, queryAsObject)
-  const { responseType = 'unknown', requestType, isMultipart, required } = typeOperation(operation)
+  const { query } = parametersToTuples(operation.parameters ?? [], comment, queryAsObject)
+  const { responseType = 'unknown', requestType, isMultipart, required } = typeOperation(operation, comment)
   const optional = /^.+?\?:/m
   const tuples = query.map(x => x.tuple).concat(requestType ? `$body${required ? '' : '?'}: ${requestType}` : []).sort((a, b) =>
     optional.test(a) === optional.test(b) ? 0 : optional.test(a) ? 1 : -1)
@@ -38,7 +38,7 @@ const generateApiMethods = (path: string, pathItem: PathItem) => methodTypes.fla
   ].filter(isPresent)
   const payload = payloads.length ? brace(payloads, false) : undefined
   const tuplesBrace = brace(tuples, tuples.join('').length > 100, undefined, '()')
-  return `${tsDoc(operation)}${methodType}: ${arrowCode(responseType, tuplesBrace, pathTemplate, methodType, payload)}`
+  return `${comment ? tsDoc(operation) : ''}${methodType}: ${arrowCode(responseType, tuplesBrace, pathTemplate, methodType, payload)}`
 })
 
 export const arrowCode = (responseType: string, tuples: string, path: string, methodType: MethodType, payload?: string) =>

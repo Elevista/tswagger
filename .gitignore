@@ -10,3 +10,4 @@ types
 /package*
 /tswagger.config.ts
 src/test.ts
+.npmrc

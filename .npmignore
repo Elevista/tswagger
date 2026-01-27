@@ -6,3 +6,4 @@ src
 api
 lib
 tsconfig.json
+.npmrc

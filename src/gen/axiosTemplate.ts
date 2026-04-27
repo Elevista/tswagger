@@ -1,4 +1,4 @@
-import { multipart, multipartCode, promiseEt } from './template'
+import { autoGenComment, multipart, multipartCode, promiseEt } from './template'
 import { variableBoundary } from '../utils'
 
 export const promiseWrapper = `${promiseEt}
@@ -14,7 +14,7 @@ export ${exportName ? `const ${exportName} =` : 'default'} ($axios = Axios.creat
 
 export const importTypes = (refTypes: string[], refPath: string) => refTypes.length ? `import { ${refTypes.join(', ')} } from '${refPath}'` : ''
 
-export const apiFile = (objectCode: string, refTypes: string[], refPath: string, exportName = '') => `/* eslint-disable */
+export const apiFile = (objectCode: string, refTypes: string[], refPath: string, exportName = '') => `${autoGenComment}
 import Axios, { AxiosStatic, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 ${importTypes(refTypes, refPath)}
 ${promiseWrapper}

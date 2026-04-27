@@ -2,7 +2,7 @@ import { parametersToTuples } from '../parametersToTuples'
 import { Schema } from '../spec/schema'
 import { MethodType, PathItem as PathItemV2, Swagger } from '../spec/v2'
 import { OpenAPI, PathItem as PathItemV3 } from '../spec/v3'
-import { multipart, multipartCode } from './template'
+import { autoGenComment, multipart, multipartCode } from './template'
 import { traversePaths } from '../traversePaths'
 import { tsDoc } from '../tsDoc'
 import { typeOperation } from '../typeOperation'
@@ -49,7 +49,7 @@ export const genRequestCode = (paths: Paths, relTypePath: string, components: Re
   const withoutComment = traversePaths(paths, (path, item) => generateApiMethods(path, item, false), tags)
   const refTypes = Object.keys(components).map(toValidName).filter(x => variableBoundary(x).test(withoutComment))
 
-  return `/* eslint-disable */
+  return `${autoGenComment}
 ${refTypes.length ? `import { ${refTypes.join(', ')} } from '${relTypePath}'` : ''}
 const $ep = <$T>(_:any) => (${obj})
 

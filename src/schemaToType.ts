@@ -2,6 +2,7 @@
 import { stringify } from 'javascript-stringify'
 import { Schema, SchemaArray, SchemaObject, SchemaOf, SchemaString, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaEnum, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
 import { docSchema } from './tsDoc'
+import { autoGenComment } from './gen/template'
 import { brace, entries, escapeProp, toValidName, variableBoundary } from './utils'
 
 type Next = (schema: Schema) => string
@@ -97,7 +98,7 @@ export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string)
     isSchemaObject(schema) && schema.additionalProperties === undefined && !isSchemaOf(schema)
       ? `${docSchema(schema)}export interface ${name} ${schemaToType(schema)}`
       : `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`
-  if (!code) return `/* eslint-disable */\n${entries.map(exportCode).join('\n')}`
+  if (!code) return `${autoGenComment}\n${entries.map(exportCode).join('\n')}`
 
   const schemaReferenced: Record<string, undefined | boolean> = {}
   schemas = Object.fromEntries(entries)
@@ -121,5 +122,5 @@ export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string)
       schemaReferenced[name] = true
       refCheck(schema)
     })
-  return `/* eslint-disable */\n${entries.filter(([name]) => schemaReferenced[name]).map(exportCode).join('\n')}`
+  return `${autoGenComment}\n${entries.filter(([name]) => schemaReferenced[name]).map(exportCode).join('\n')}`
 }

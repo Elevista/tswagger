@@ -16,15 +16,19 @@ type Next = (schema: Schema) => string
  */
 export const schemaToType = (schema: Schema, comment = true, multiline = true): string => {
   const next: Next = (schema: Schema) => schemaToType(schema, comment, multiline)
-  if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
-  if (isSchemaEnum(schema)) return schema.enum.map(x => stringify(x)).join(' | ') || 'never'
-  if (isSchemaObject(schema)) return toType.object(schema, comment, multiline, next)
-  if (isSchemaArray(schema)) return toType.array(schema, next)
-  if (isSchemaOf(schema)) return toType.union(schema, next)
-  if (isSchemaString(schema)) return toType.string(schema)
-  if (isSchemaNumber(schema)) return toType.number()
-  if (isSchemaBoolean(schema)) return toType.boolean()
-  return 'unknown'
+  const type = (() => {
+    if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
+    if (isSchemaEnum(schema)) return schema.enum.map(x => stringify(x)).join(' | ') || 'never'
+    if (isSchemaObject(schema)) return toType.object(schema, comment, multiline, next)
+    if (isSchemaArray(schema)) return toType.array(schema, next)
+    if (isSchemaOf(schema)) return toType.union(schema, next)
+    if (isSchemaString(schema)) return toType.string(schema)
+    if (isSchemaNumber(schema)) return toType.number()
+    if (isSchemaBoolean(schema)) return toType.boolean()
+    return 'unknown'
+  })()
+  if (!schema.nullable || type === 'unknown' || type.split(' | ').includes('null')) return type
+  return type === 'never' ? 'null' : `${type} | null`
 }
 
 const toType = {
@@ -32,7 +36,7 @@ const toType = {
   number: () => 'number',
   string: (schema: SchemaString) => (schema.format === 'binary' || schema.format === 'byte') ? 'File' : 'string',
   object: (schema: SchemaObject, comment: boolean, multiline: boolean, next: Next) => {
-    const { type: _, properties = {}, additionalProperties, required = [], ...rest } = schema
+    const { type: _, properties = {}, additionalProperties, required = [], nullable: _1, ...rest } = schema
     let obj = brace(entries(properties).map(([key, value]) => {
       const tuple = `${escapeProp(key)}${required.includes(`${key}`) ? '' : '?'}: ${next(value)}`
       return `${comment ? docSchema(value) : ''}${tuple}`

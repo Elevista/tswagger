@@ -4,6 +4,7 @@ interface SchemaBase<T = unknown> {
   example?: T;
   default?: T;
   description?: string;
+  nullable?: boolean
 }
 
 export interface SchemaNumber extends SchemaBase<number> {
@@ -29,7 +30,7 @@ export interface SchemaObject extends SchemaBase<Record<string, unknown>> {
 }
 
 export interface SchemaArray extends SchemaBase<unknown[]> { type: 'array'; items?: Schema;}
-export interface Reference { $ref: `#/${`components/${string}` | 'definitions'}/${string}` }
+export interface Reference { $ref: `#/${`components/${string}` | 'definitions'}/${string}`, nullable?: boolean }
 
 export type SchemaOf = SchemaBase & ({allOf: Schema[]} | {anyOf: Schema[]} | {oneOf: Schema[]})
 export type Schema = SchemaArray | SchemaObject | SchemaBoolean | SchemaString | SchemaNumber | SchemaOf | Reference

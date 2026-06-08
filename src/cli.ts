@@ -11,7 +11,7 @@ import { genTypeFile } from './schemaToType'
 import { genRequestCode } from './gen/request'
 import { resolveRefs } from './utils'
 const { join: pathJoin, dirname, relative, extname, resolve } = path
-const yargs = require('yargs/yargs')
+const yargs = require('yargs')
 const { hideBin } = require('yargs/helpers')
 const { version } = require('../package.json')
 try { require('ts-node').register() } catch (e) {}

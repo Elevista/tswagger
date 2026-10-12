@@ -26,14 +26,15 @@ const cruds = ['post', 'get', 'put', 'patch', 'delete'] satisfies MethodType[]
 const hasBody = (method: string) => (['post', 'put', 'patch'] satisfies MethodType[]).some(x => x === method)
 const isCrud = (x: string): x is typeof cruds[number] => cruds.some(y => y === x)
 
-export const operationTupleConfig = (operation: Operation, comment = true) => {
+export const operationTupleConfig = (operation: Operation, method: MethodType, comment = true) => {
   const { parameters = [] } = operation
   const queryAsObject = parameters.filter(x => x.in === 'query').length > 3
   const { query, path } = parametersToTuples(parameters, comment, queryAsObject)
-  const body = convertBody(operation, comment)
+  const body = method === 'get' ? {} : convertBody(operation, comment)
   const tuples = query.map(x => x.tuple).concat(body.tuple ?? []).sort((a, b) =>
     optionalTuple.test(a) === optionalTuple.test(b) ? 0 : optionalTuple.test(a) ? 1 : -1)
   const entries = query.length ? [`params: ${queryAsObject ? query[0].entry : brace(query.map(x => x.entry), false)}`] : []
+  if (method === 'delete' && body.value) entries.push(`data: ${body.value}`)
   tuples.push('$config?: AxiosRequestConfig')
   entries.push('...$config')
   const config = entries.length === 1 ? '$config' : brace(entries, entries.length > 2)
@@ -51,7 +52,7 @@ export const operationTupleConfig = (operation: Operation, comment = true) => {
 export const generateApiMethods = (path: string, pathItem: PathItem, comment = true) => keys(pathItem).filter(isCrud).flatMap(crud => {
   const operation = pathItem[crud]
   if (!operation) return []
-  const { tuples, config, data } = operationTupleConfig(operation, comment)
+  const { tuples, config, data } = operationTupleConfig(operation, crud, comment)
   const { responseType = 'unknown', errorType = 'unknown' } = typeOperation(operation, comment)
   const pathTemplate = `\`${path.replace(/{([^}]+)}/g, '${$1}')}\`` // eslint-disable-line no-template-curly-in-string
   const args = [pathTemplate, hasBody(crud) && (data ?? (config && 'undefined')), config].filter(isPresent)

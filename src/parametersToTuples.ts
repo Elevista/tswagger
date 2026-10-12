@@ -31,7 +31,7 @@ export type TupleInfo = {
 export const parameterToTuple = (x: ParameterV2 | ParameterV3, comment?: boolean, multiline?: boolean): TupleInfo => {
   const schema = 'type' in x ? x : x.schema
   const validName = toValidName(x.name)
-  const doc = comment ? tsDoc(schema) : ''
+  const doc = comment ? tsDoc({ ...schema, ...x }) : ''
   const [name, label] = [x.name, `${validName}${(x.required || x.in === 'path') ? '' : '?'}`]
   const entry = name === validName ? name : `${escapeProp(name)}: ${validName}`
   const type = schema
@@ -79,7 +79,10 @@ export type ParametersToSchema<T extends Parameter> = {
  */
 export const parametersToSchemaObject = <T extends Parameter[]>(parameters: T) => ({
   type: 'object',
-  properties: Object.fromEntries(parameters.flatMap(x =>
-    'schema' in x ? [[x.name, x.schema]] : isJsonSchema(x) ? [[x.name, x]] : [])),
+  properties: Object.fromEntries(parameters.flatMap(x => {
+    if (!('schema' in x)) return isJsonSchema(x) ? [[x.name, x]] : []
+    const { name, in: _, required: _1, schema, ...doc } = x
+    return [[name, { ...schema, ...doc }]]
+  })),
   required: parameters.filter(x => x.required).map(x => x.name),
 } as const) as ParametersToSchema<T[number]>

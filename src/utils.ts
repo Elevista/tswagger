@@ -53,16 +53,28 @@ export const brace = (str: string | string[], multiline = true, delimiter = ',',
   return `${open}\n${text.replace(/^/mg, '  ')}\n${close}`
 }
 
+const variableChar = /[\p{L}\p{N}_$]/u.source
+
 /**
  * Returns a regular expression that matches the variable name between variable boundaries.
  * @param varName The variable name to match.
  * @param flag The regular expression flag.
  */
 export const variableBoundary = (varName: string, flag = '') => new RegExp([
-  /(?<![\p{L}\p{N}_$])/u.source, // boundary
+  `(?<!${variableChar})`, // boundary
   varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-  /(?![\p{L}\p{N}_$])/u.source, // boundary
+  `(?!${variableChar})`, // boundary
 ].join(''), `u${flag}`)
+
+/**
+ * A regular expression that matches an optional argument tuple such as `name?: string`.
+ * The tuple may be preceded by a TSDoc comment.
+ */
+export const optionalTuple = new RegExp([
+  /^(\/\*\*[\s\S]*?\*\/\n)?/.source,
+  `${variableChar}+`,
+  /\?:/.source,
+].join(''), 'u')
 
 /**
  * Resolves all $refs except schemas in the OpenAPI v3.0 spec.

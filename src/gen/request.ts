@@ -6,11 +6,11 @@ import { autoGenComment, multipart, multipartCode } from './template'
 import { traversePaths } from '../traversePaths'
 import { tsDoc } from '../tsDoc'
 import { typeOperation } from '../typeOperation'
-import { brace, isPresent, toValidName, variableBoundary } from '../utils'
+import { brace, isPresent, optionalTuple, toValidName, variableBoundary } from '../utils'
 type PathItem = PathItemV2 | PathItemV3
 type Paths = (OpenAPI | Swagger)['paths']
 
-const methodTypes = ['get', 'post', 'put', 'delete'] satisfies MethodType[]
+const methodTypes = ['get', 'post', 'put', 'patch', 'delete'] satisfies MethodType[]
 
 /**
  * A function used as a callback function for the traversePaths function.
@@ -26,9 +26,8 @@ const generateApiMethods = (path: string, pathItem: PathItem, comment = true) =>
   const queryAsObject = (operation.parameters?.filter(x => x.in === 'query').length ?? 0) > 3
   const { query } = parametersToTuples(operation.parameters ?? [], comment, queryAsObject)
   const { responseType = 'unknown', requestType, isMultipart, required } = typeOperation(operation, comment)
-  const optional = /^.+?\?:/m
   const tuples = query.map(x => x.tuple).concat(requestType ? `$body${required ? '' : '?'}: ${requestType}` : []).sort((a, b) =>
-    optional.test(a) === optional.test(b) ? 0 : optional.test(a) ? 1 : -1)
+    optionalTuple.test(a) === optionalTuple.test(b) ? 0 : optionalTuple.test(a) ? 1 : -1)
 
   const pathTemplate = `\`${path.replace(/{([^}]+)}/g, '${$1}')}\`` // eslint-disable-line no-template-curly-in-string
 

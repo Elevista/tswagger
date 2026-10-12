@@ -1,6 +1,6 @@
 /* eslint-disable dot-notation */
 import { stringify } from 'javascript-stringify'
-import { Schema, SchemaArray, SchemaObject, SchemaOf, SchemaString, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaEnum, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
+import { Schema, SchemaArray, SchemaObject, SchemaOf, SchemaString, isNullable, isPrimitive, isReference, isSchemaArray, isSchemaBoolean, isSchemaConst, isSchemaEnum, isSchemaNull, isSchemaNumber, isSchemaObject, isSchemaOf, isSchemaString } from './spec/schema'
 import { docSchema } from './tsDoc'
 import { autoGenComment } from './gen/template'
 import { brace, entries, escapeProp, toValidName, variableBoundary } from './utils'
@@ -19,6 +19,7 @@ export const schemaToType = (schema: Schema, comment = true, multiline = true): 
   const next: Next = (schema: Schema) => schemaToType(schema, comment, multiline)
   const type = (() => {
     if (isReference(schema)) return toValidName(schema.$ref.replace(/^#\/(components\/schemas|definitions)\//, ''))
+    if (isSchemaConst(schema)) return `${stringify(schema.const)}`
     if (isSchemaEnum(schema)) return schema.enum.map(x => stringify(x)).join(' | ') || 'never'
     if (isSchemaObject(schema)) return toType.object(schema, comment, multiline, next)
     if (isSchemaArray(schema)) return toType.array(schema, next)
@@ -26,13 +27,15 @@ export const schemaToType = (schema: Schema, comment = true, multiline = true): 
     if (isSchemaString(schema)) return toType.string(schema)
     if (isSchemaNumber(schema)) return toType.number()
     if (isSchemaBoolean(schema)) return toType.boolean()
+    if (isSchemaNull(schema)) return toType.null()
     return 'unknown'
   })()
-  if (!schema.nullable || type === 'unknown' || type.split(' | ').includes('null')) return type
+  if (!isNullable(schema) || type === 'unknown' || type.split(' | ').includes('null')) return type
   return type === 'never' ? 'null' : `${type} | null`
 }
 
 const toType = {
+  null: () => 'null',
   boolean: () => 'boolean',
   number: () => 'number',
   string: (schema: SchemaString) => (schema.format === 'binary' || schema.format === 'byte') ? 'File' : 'string',
@@ -95,7 +98,7 @@ const combinations = function (str1: string[]) {
 export const genTypeFile = (schemas: Record<string, Schema> = {}, code?: string) => {
   const entries = Object.entries(schemas).map(([name, schema]) => [toValidName(name), schema] as const)
   const exportCode = ([name, schema]: readonly [string, Schema]) =>
-    isSchemaObject(schema) && schema.additionalProperties === undefined && !isSchemaOf(schema)
+    isSchemaObject(schema) && !isNullable(schema) && schema.additionalProperties === undefined && !isSchemaOf(schema)
       ? `${docSchema(schema)}export interface ${name} ${schemaToType(schema)}`
       : `${docSchema(schema)}export type ${name} = ${schemaToType(schema)}`
   if (!code) return `${autoGenComment}\n${entries.map(exportCode).join('\n')}`

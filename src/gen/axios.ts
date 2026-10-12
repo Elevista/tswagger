@@ -3,7 +3,7 @@ import { parametersToTuples } from '../parametersToTuples'
 import { typeOperation } from '../typeOperation'
 import { MethodType, Operation as OperationV2, PathItem as PathItemV2, Swagger } from '../spec/v2'
 import { OpenAPI, Operation as OperationV3, PathItem as PathItemV3 } from '../spec/v3'
-import { brace, isPresent, keys, toValidName, variableBoundary } from '../utils'
+import { brace, isPresent, keys, optionalTuple, toValidName, variableBoundary } from '../utils'
 import { tsDoc } from '../tsDoc'
 import { Schema } from '../spec/schema'
 import { traversePaths } from '../traversePaths'
@@ -22,8 +22,8 @@ export const convertBody = (operation: Operation, comment = true) => {
   }
 }
 
-const cruds = ['post', 'get', 'put', 'delete'] satisfies MethodType[]
-const hasBody = (method: string) => (['post', 'put'] satisfies MethodType[]).some(x => x === method)
+const cruds = ['post', 'get', 'put', 'patch', 'delete'] satisfies MethodType[]
+const hasBody = (method: string) => (['post', 'put', 'patch'] satisfies MethodType[]).some(x => x === method)
 const isCrud = (x: string): x is typeof cruds[number] => cruds.some(y => y === x)
 
 export const operationTupleConfig = (operation: Operation, comment = true) => {
@@ -31,9 +31,8 @@ export const operationTupleConfig = (operation: Operation, comment = true) => {
   const queryAsObject = parameters.filter(x => x.in === 'query').length > 3
   const { query, path } = parametersToTuples(parameters, comment, queryAsObject)
   const body = convertBody(operation, comment)
-  const optional = /^.+?\?:/m
   const tuples = query.map(x => x.tuple).concat(body.tuple ?? []).sort((a, b) =>
-    optional.test(a) === optional.test(b) ? 0 : optional.test(a) ? 1 : -1)
+    optionalTuple.test(a) === optionalTuple.test(b) ? 0 : optionalTuple.test(a) ? 1 : -1)
   const entries = query.length ? [`params: ${queryAsObject ? query[0].entry : brace(query.map(x => x.entry), false)}`] : []
   tuples.push('$config?: AxiosRequestConfig')
   entries.push('...$config')

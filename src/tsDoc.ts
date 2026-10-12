@@ -9,13 +9,17 @@ export const tsDocForm = (content?: string) => {
   return multiline ? `/**\n * ${doc}\n */\n` : `/** ${doc} */\n`
 }
 
-export type DocProps = { title?: string, summary?: string, description?: string, example?: unknown, default?: unknown } & object
-export const tsDoc = ({ title, summary, description, example, default: defaults }: DocProps = {}) => tsDocForm([
+const isList = (x: unknown): x is readonly unknown[] => Array.isArray(x)
+
+export type DocProps = { title?: string, summary?: string, description?: string, example?: unknown, examples?: readonly unknown[] | { [name: string]: object }, default?: unknown, deprecated?: boolean } & object
+export const tsDoc = ({ title, summary, description, example, examples = [], default: defaults, deprecated }: DocProps = {}) => tsDocForm([
   title,
   title && summary ? `@summary ${summary}` : summary,
   (title || summary) && description ? `@desc ${description}` : description,
   example !== undefined && `@example ${stringify(example)}`,
+  ...(isList(examples) ? examples : Object.values(examples).flatMap(x => 'value' in x ? [x.value] : [])).map(x => `@example ${stringify(x)}`),
   defaults !== undefined && `@default ${stringify(defaults)}`,
+  deprecated && '@deprecated',
 ].filter(x => x).join('\n'))
 
 export const docSchema = (schema: Schema) => isReference(schema) ? '' : tsDoc(schema as {})
